@@ -11,7 +11,7 @@ Production use should generally remain disabled, even though deliberate producti
 | Package | Supported versions |
 | --- | --- |
 | PHP | 8.2–8.4 |
-| Laravel | 11–13 (as resolved by Filament) |
+| Laravel | 12–13 (as resolved by Filament) |
 | Livewire | 3.x with Filament 4; 4.x with Filament 5 |
 | Filament | 4.x and 5.x |
 

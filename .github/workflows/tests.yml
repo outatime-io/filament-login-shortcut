@@ -13,28 +13,45 @@ jobs:
       matrix:
         include:
           - php: '8.2'
-            laravel: '^11.0'
+            laravel: '^12.52.0'
             filament: '^4.0'
+            testbench: '^10.0'
+            pest: '^3.8.2'
+            pest_plugin_laravel: '^3.2.0'
           - php: '8.3'
-            laravel: '^12.0'
+            laravel: '^12.52.0'
             filament: '^4.0'
+            testbench: '^10.0'
+            pest: '^4.4.1'
+            pest_plugin_laravel: '^4.1.0'
           - php: '8.3'
-            laravel: '^12.0'
+            laravel: '^12.52.0'
             filament: '^5.0'
+            testbench: '^10.0'
+            pest: '^4.4.1'
+            pest_plugin_laravel: '^4.1.0'
           - php: '8.4'
             laravel: '^13.0'
             filament: '^5.0'
+            testbench: '^11.0'
+            pest: '^4.4.1'
+            pest_plugin_laravel: '^4.1.0'
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           coverage: none
-      - uses: ramsey/composer-install@v3
-        with:
-          composer-options: --prefer-dist --no-interaction
-      - run: composer require --no-update "illuminate/support:${{ matrix.laravel }}" "filament/filament:${{ matrix.filament }}"
-      - run: composer update --prefer-dist --no-interaction
+      - run: >-
+          composer require --no-update
+          "laravel/framework:${{ matrix.laravel }}"
+          "filament/filament:${{ matrix.filament }}"
+      - run: >-
+          composer require --dev --no-update
+          "orchestra/testbench:${{ matrix.testbench }}"
+          "pestphp/pest:${{ matrix.pest }}"
+          "pestphp/pest-plugin-laravel:${{ matrix.pest_plugin_laravel }}"
+      - run: composer update --with-all-dependencies --prefer-dist --no-interaction
       - run: composer validate --strict
       - run: composer format
       - run: composer analyse
