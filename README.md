@@ -83,12 +83,38 @@ All fluent methods return the plugin instance, so they can be chained in a panel
 | `searchDebounce(int $milliseconds)` | Integer at least zero | `300` | Sets the search debounce interval in milliseconds. |
 | `userLabelUsing(Closure $callback)` | `fn (Authenticatable $user): string` | User `email` | Produces the visible user label. |
 | `authorizeUsing(Closure $callback)` | `fn (Request $request, Panel $panel, string $environment): bool` | none | Required outside local; use IP/VPN, policy, or proxy authorization. `false` or exceptions deny access. |
-| `allUsers()` | none | active default strategy | Makes every configured-model user eligible. Replaces another strategy. |
+| `allUsers()` | none | active default strategy | Lists every configured-model user. It never filters the Select by `canAccessPanel()`. Replaces another strategy. |
 | `usersWithEmails(array $emails)` | Exact email addresses | none | Restricts eligible users to these addresses. Replaces another strategy. |
 | `usersWithEmailDomains(array $domains)` | Exact domains, optional `@` | none | Restricts eligible users to these domain suffixes. Replaces another strategy. |
 | `usersUsingQuery(Closure $callback)` | `fn (Builder $query): Builder` for configured model | none | Provides a custom eligible-users query. Replaces another strategy; a wrong builder/model throws `InvalidConfiguration`. |
 | `logIpAddresses(bool $value = true)` | Boolean | config `audit.log_ip_addresses` (`false`) | Includes IPs in audit records. Enable only with suitable retention controls. |
 | `transformIpAddressUsing(Closure $callback)` | `fn (?string $ip): ?string` | none | Transforms an IP before it is included in audit data, e.g. hashes it. |
+
+### Filtering selectable users
+
+The Select is filtered **only** by the active eligibility strategy:
+
+- `allUsers()` — the default — lists every user from the configured model.
+- `usersWithEmails()` and `usersWithEmailDomains()` list only the matching users.
+- `usersUsingQuery()` lists only the users returned by its Eloquent query.
+
+> **Important:** `canAccessPanel()` does **not** filter the initially displayed users or search results. Changing a user's `canAccessPanel()` result alone will never add or remove that user from the Select.
+
+The package calls `canAccessPanel()` only after a user has been selected and the **Login as user** button is pressed. If it returns `false`, login is denied; the user may still have appeared in the Select.
+
+To filter the Select, configure `usersUsingQuery()` in the panel provider. The callback becomes the database query for the initial options and search results. For example, CourtDesk's admin panel permits only users with `is_admin = true`:
+
+```php
+use Illuminate\Database\Eloquent\Builder;
+
+DeveloperLoginPlugin::make()
+    ->enabled()
+    ->usersUsingQuery(
+        fn (Builder $query): Builder => $query->where('is_admin', true),
+    );
+```
+
+With this configuration, non-admin users are never queried for or shown in the Select. `canAccessPanel()` remains a separate final authorization check at login.
 
 ### Package configuration reference
 
@@ -179,7 +205,7 @@ Search never runs below the minimum length, escapes SQL wildcard input, limits r
 
 ## Authentication and auditing
 
-The component refuses authenticated panel guards, uses the current panel's configured guard, checks `canAccessPanel()` when present, regenerates the session, and redirects only to a same-host intended URL or the panel URL. It has separate per-panel/session/IP rate limits for search and login. It does not replace an existing session or act as impersonation.
+The component refuses authenticated panel guards, uses the current panel's configured guard, and checks `canAccessPanel()` when present after a user is selected. It regenerates the session and redirects only to a same-host intended URL or the panel URL. It has separate per-panel/session/IP rate limits for search and login. It does not replace an existing session or act as impersonation.
 
 Events are `AutoLoginSucceeded`, `AutoLoginDenied`, and `AutoLoginFailed`. They contain identifiers (not email/name), panel, environment, timestamp, and a stable reason code where relevant. IP addresses are absent by default:
 
