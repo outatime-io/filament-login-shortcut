@@ -1,0 +1,35 @@
+{
+  "name": "outatime-io/filament-developer-login",
+  "description": "A secure developer login selector for Filament panels.",
+  "homepage": "https://github.com/outatime-io/filament-developer-login",
+  "keywords": ["laravel", "filament", "filament-plugin", "developer-login", "development", "testing"],
+  "license": "MIT",
+  "support": {
+    "issues": "https://github.com/outatime-io/filament-developer-login/issues",
+    "source": "https://github.com/outatime-io/filament-developer-login"
+  },
+  "type": "library",
+  "require": {
+    "php": "^8.2",
+    "filament/filament": "^4.0|^5.0"
+  },
+  "require-dev": {
+    "orchestra/testbench": "^9.0|^10.0|^11.0",
+    "pestphp/pest": "^3.0|^4.0",
+    "pestphp/pest-plugin-laravel": "^3.0|^4.0",
+    "larastan/larastan": "^2.9|^3.0",
+    "laravel/pint": "^1.0"
+  },
+  "autoload": {"psr-4": {"OutatimeIo\\FilamentDeveloperLogin\\": "src/"}},
+  "autoload-dev": {"psr-4": {"OutatimeIo\\FilamentDeveloperLogin\\Tests\\": "tests/"}},
+  "extra": {"laravel": {"providers": ["OutatimeIo\\FilamentDeveloperLogin\\FilamentDeveloperLoginServiceProvider"]}},
+  "scripts": {
+    "test": "pest",
+    "analyse": "php -d memory_limit=1G vendor/bin/phpstan analyse",
+    "format": "pint --test",
+    "check:composer": "composer validate --strict"
+  },
+  "config": {"sort-packages": true, "allow-plugins": {"pestphp/pest-plugin": true}},
+  "minimum-stability": "stable",
+  "prefer-stable": true
+}
