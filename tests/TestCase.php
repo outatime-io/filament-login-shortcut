@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin\Tests;
+namespace OutatimeIo\FilamentLoginShortcut\Tests;
 
 use Filament\FilamentServiceProvider;
 use Filament\Forms\FormsServiceProvider;
@@ -11,8 +11,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
-use OutatimeIo\FilamentDeveloperLogin\FilamentDeveloperLoginServiceProvider;
-use OutatimeIo\FilamentDeveloperLogin\Tests\Fixtures\User;
+use OutatimeIo\FilamentLoginShortcut\FilamentLoginShortcutServiceProvider;
+use OutatimeIo\FilamentLoginShortcut\Tests\Fixtures\User;
 
 abstract class TestCase extends Orchestra
 {
@@ -23,7 +23,7 @@ abstract class TestCase extends Orchestra
             FormsServiceProvider::class,
             FilamentServiceProvider::class,
             LivewireServiceProvider::class,
-            FilamentDeveloperLoginServiceProvider::class,
+            FilamentLoginShortcutServiceProvider::class,
         ];
     }
 
@@ -37,7 +37,7 @@ abstract class TestCase extends Orchestra
             'prefix' => '',
         ]);
         $app['config']->set('auth.providers.users.model', User::class);
-        $app['config']->set('filament-developer-login.user_model', User::class);
+        $app['config']->set('filament-login-shortcut.user_model', User::class);
     }
 
     protected function setUp(): void

@@ -1,1 +1,1 @@
-@livewire('filament-developer-login', ['panelId' => $panelId], key('filament-developer-login-'.$panelId))
+@livewire('filament-login-shortcut', ['panelId' => $panelId], key('filament-login-shortcut-'.$panelId))

@@ -2,6 +2,6 @@
 
 declare(strict_types=1);
 
-use OutatimeIo\FilamentDeveloperLogin\Tests\TestCase;
+use OutatimeIo\FilamentLoginShortcut\Tests\TestCase;
 
 uses(TestCase::class)->in('Feature');

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin;
+namespace OutatimeIo\FilamentLoginShortcut;
 
 use Closure;
 use Filament\Contracts\Plugin;
@@ -12,9 +12,9 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use OutatimeIo\FilamentDeveloperLogin\Exceptions\InvalidConfiguration;
+use OutatimeIo\FilamentLoginShortcut\Exceptions\InvalidConfiguration;
 
-final class DeveloperLoginPlugin implements Plugin
+final class LoginShortcutPlugin implements Plugin
 {
     private bool|Closure|null $enabled = null;
 
@@ -55,7 +55,7 @@ final class DeveloperLoginPlugin implements Plugin
 
     public function getId(): string
     {
-        return 'filament-developer-login';
+        return 'filament-login-shortcut';
     }
 
     public function register(Panel $panel): void
@@ -209,7 +209,7 @@ final class DeveloperLoginPlugin implements Plugin
     /** @return class-string<Model&Authenticatable> */
     public function model(): string
     {
-        $model = $this->model ?? (string) config('filament-developer-login.user_model');
+        $model = $this->model ?? (string) config('filament-login-shortcut.user_model');
         $this->assertModel($model);
 
         return $model;
@@ -218,22 +218,22 @@ final class DeveloperLoginPlugin implements Plugin
     /** @return list<string> */
     public function columns(): array
     {
-        return $this->columns ?? $this->validateColumns((array) config('filament-developer-login.search.columns', ['email']));
+        return $this->columns ?? $this->validateColumns((array) config('filament-login-shortcut.search.columns', ['email']));
     }
 
     public function limit(): int
     {
-        return min($this->limit ?? (int) config('filament-developer-login.search.result_limit', 20), (int) config('filament-developer-login.search.hard_maximum', 100));
+        return min($this->limit ?? (int) config('filament-login-shortcut.search.result_limit', 20), (int) config('filament-login-shortcut.search.hard_maximum', 100));
     }
 
     public function minimumLength(): int
     {
-        return $this->minimumLength ?? (int) config('filament-developer-login.search.minimum_length', 1);
+        return $this->minimumLength ?? (int) config('filament-login-shortcut.search.minimum_length', 1);
     }
 
     public function debounce(): int
     {
-        return $this->debounce ?? (int) config('filament-developer-login.search.debounce', 300);
+        return $this->debounce ?? (int) config('filament-login-shortcut.search.debounce', 300);
     }
 
     public function label(): ?Closure
@@ -265,7 +265,7 @@ final class DeveloperLoginPlugin implements Plugin
 
     public function shouldLogIps(): bool
     {
-        return $this->logIps ?? (bool) config('filament-developer-login.audit.log_ip_addresses', false);
+        return $this->logIps ?? (bool) config('filament-login-shortcut.audit.log_ip_addresses', false);
     }
 
     public function ipTransformer(): ?Closure

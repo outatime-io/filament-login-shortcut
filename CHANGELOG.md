@@ -4,4 +4,4 @@ All notable changes will be documented in this file. This project follows Semant
 
 ## v1.0.0
 
-- Initial release of Filament Developer Login.
+- Initial release of Filament Login Shortcut.

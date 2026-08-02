@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin\Support;
+namespace OutatimeIo\FilamentLoginShortcut\Support;
 
 use Filament\Panel;
 use Illuminate\Http\Request;
-use OutatimeIo\FilamentDeveloperLogin\DeveloperLoginPlugin;
+use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
 
 final class Availability
 {
-    public function allows(DeveloperLoginPlugin $plugin, Panel $panel, Request $request): bool
+    public function allows(LoginShortcutPlugin $plugin, Panel $panel, Request $request): bool
     {
         $environment = mb_strtolower((string) app()->environment());
         $environmentIsAllowed = $environment === 'local' || in_array($environment, $plugin->environments(), true);

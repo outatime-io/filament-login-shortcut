@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin\Query;
+namespace OutatimeIo\FilamentLoginShortcut\Query;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use OutatimeIo\FilamentDeveloperLogin\DeveloperLoginPlugin;
-use OutatimeIo\FilamentDeveloperLogin\Exceptions\InvalidConfiguration;
+use OutatimeIo\FilamentLoginShortcut\Exceptions\InvalidConfiguration;
+use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
 
 final class EligibleUsers
 {
     /** @return Builder<Model> */
-    public function build(DeveloperLoginPlugin $plugin): Builder
+    public function build(LoginShortcutPlugin $plugin): Builder
     {
         $model = $plugin->model();
         /** @var Builder<Model> $query */ $query = $model::query();
@@ -40,7 +40,7 @@ final class EligibleUsers
     }
 
     /** @return Builder<Model> */
-    public function matching(DeveloperLoginPlugin $plugin, string $term): Builder
+    public function matching(LoginShortcutPlugin $plugin, string $term): Builder
     {
         $query = $this->build($plugin);
         $term = $this->escapeLike(mb_strtolower($term));

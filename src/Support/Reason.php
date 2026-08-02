@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin\Support;
+namespace OutatimeIo\FilamentLoginShortcut\Support;
 
 final class Reason
 {

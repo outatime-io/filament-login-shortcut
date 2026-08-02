@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 use Filament\Panel;
 use Illuminate\Http\Request;
-use OutatimeIo\FilamentDeveloperLogin\DeveloperLoginPlugin;
-use OutatimeIo\FilamentDeveloperLogin\Support\Availability;
+use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
+use OutatimeIo\FilamentLoginShortcut\Support\Availability;
 
 it('allows an explicitly enabled local environment even when it is omitted from the allow-list', function (): void {
     app()->detectEnvironment(fn (): string => 'local');
 
-    $plugin = DeveloperLoginPlugin::make()
+    $plugin = LoginShortcutPlugin::make()
         ->enabled(true)
         ->allowedEnvironments(['staging']);
 
@@ -20,7 +20,7 @@ it('allows an explicitly enabled local environment even when it is omitted from 
 it('denies an explicitly enabled non-local allow-listed environment without an authorization callback', function (): void {
     app()->detectEnvironment(fn (): string => 'staging');
 
-    $plugin = DeveloperLoginPlugin::make()
+    $plugin = LoginShortcutPlugin::make()
         ->enabled(true)
         ->allowedEnvironments(['staging']);
 

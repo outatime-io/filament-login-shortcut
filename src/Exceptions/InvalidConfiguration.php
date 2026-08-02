@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin\Exceptions;
+namespace OutatimeIo\FilamentLoginShortcut\Exceptions;
 
 use LogicException;
 

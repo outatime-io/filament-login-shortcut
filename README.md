@@ -1,8 +1,8 @@
-# Filament Developer Login
+# Filament Login Shortcut
 
-A secure developer login selector for Filament panels.
+A secure login shortcut selector for Filament panels.
 
-> **Security warning:** This package provides passwordless developer login. Enabling it outside a local environment can grant access to privileged user accounts. Non-local use requires an application-defined authorization callback and appropriate network and organizational controls.
+> **Security warning:** This package provides a passwordless sign-in shortcut. Enabling it outside a local environment can grant access to privileged user accounts. Non-local use requires an application-defined authorization callback and appropriate network and organizational controls.
 
 Production use should generally remain disabled, even though deliberate production activation is technically possible.
 
@@ -20,21 +20,21 @@ Filament v3 is intentionally unsupported. CI exercises representative lowest/cur
 ## Installation
 
 ```bash
-composer require --dev outatime-io/filament-developer-login
-php artisan vendor:publish --tag=filament-developer-login-config
+composer require --dev outatime-io/filament-login-shortcut
+php artisan vendor:publish --tag=filament-login-shortcut-config
 ```
 
 Install this package as a development dependency by default. Deploy production and staging with `composer install --no-dev --optimize-autoloader`; this keeps the passwordless login code out of those deployments entirely.
 
-Use a normal dependency only when you intentionally need developer login on a non-local environment, such as a protected staging system. In that case, configure an explicit non-local authorization callback and ensure the package is installed in that environment.
+Use a normal dependency only when you intentionally need the login shortcut in a non-local environment, such as a protected staging system. In that case, configure an explicit non-local authorization callback and ensure the package is installed in that environment.
 
 Register it independently on every intended panel:
 
 ```php
-use OutatimeIo\FilamentDeveloperLogin\DeveloperLoginPlugin;
+use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
 
 $panel->plugin(
-    DeveloperLoginPlugin::make()
+    LoginShortcutPlugin::make()
         ->enabled(),
 );
 ```
@@ -43,10 +43,10 @@ The plugin uses Filament's documented `AUTH_LOGIN_FORM_BEFORE` hook, so it appea
 
 ## Safe defaults and environments
 
-The feature is off by default and can only be enabled in the panel provider. `FILAMENT_DEVELOPER_LOGIN_ENABLED` and `FILAMENT_DEVELOPER_LOGIN_ALLOWED_ENVIRONMENTS` are not supported. Local is always allowed once explicitly enabled, so no environment configuration is needed for a local-only setup:
+The feature is off by default and can only be enabled in the panel provider. `FILAMENT_LOGIN_SHORTCUT_ENABLED` and `FILAMENT_LOGIN_SHORTCUT_ALLOWED_ENVIRONMENTS` are not supported. Local is always allowed once explicitly enabled, so no environment configuration is needed for a local-only setup:
 
 ```php
-DeveloperLoginPlugin::make()
+LoginShortcutPlugin::make()
     ->enabled();
 ```
 
@@ -56,12 +56,12 @@ To allow a non-local environment, include its exact name in the panel-provider a
 use Filament\Panel;
 use Illuminate\Http\Request;
 
-DeveloperLoginPlugin::make()
+LoginShortcutPlugin::make()
     ->enabled(true)
     ->allowedEnvironments(['local', 'staging'])
     ->authorizeUsing(
         fn (Request $request, Panel $panel, string $environment): bool => $environment === 'local'
-            || in_array($request->ip(), config('services.developer_login.allowed_ips', []), true),
+            || in_array($request->ip(), config('services.login_shortcut.allowed_ips', []), true),
     );
 ```
 
@@ -107,7 +107,7 @@ To filter the Select, configure `usersUsingQuery()` in the panel provider. The c
 ```php
 use Illuminate\Database\Eloquent\Builder;
 
-DeveloperLoginPlugin::make()
+LoginShortcutPlugin::make()
     ->enabled()
     ->usersUsingQuery(
         fn (Builder $query): Builder => $query->where('is_admin', true),
@@ -140,7 +140,7 @@ These public methods exist for Filament and the package's Livewire/query service
 
 | Method | Returns | Purpose |
 | --- | --- | --- |
-| `getId()` | `string` | The fixed plugin identifier: `filament-developer-login`. |
+| `getId()` | `string` | The fixed plugin identifier: `filament-login-shortcut`. |
 | `register(Panel $panel)` | `void` | Registers the login-form render hook. Called by Filament. |
 | `boot(Panel $panel)` | `void` | Filament lifecycle hook; currently no operation. |
 | `isEnabled()` | `bool\|Closure` | Resolves the panel-provider enabled value. |
@@ -166,21 +166,21 @@ Strategies are mutually exclusive: the last strategy method called replaces the 
 
 ```php
 // All users (default)
-DeveloperLoginPlugin::make()->enabled(true)->allUsers();
+LoginShortcutPlugin::make()->enabled(true)->allUsers();
 
 // Exact email addresses
-DeveloperLoginPlugin::make()->enabled(true)->usersWithEmails([
+LoginShortcutPlugin::make()->enabled(true)->usersWithEmails([
     'admin@example.test',
     'editor@example.test',
 ]);
 
 // Exact email domains; @ is optional
-DeveloperLoginPlugin::make()->enabled(true)->usersWithEmailDomains(['local.test']);
+LoginShortcutPlugin::make()->enabled(true)->usersWithEmailDomains(['local.test']);
 
 // Custom query must return a Builder for the configured user model
 use Illuminate\Database\Eloquent\Builder;
-DeveloperLoginPlugin::make()->enabled(true)->usersUsingQuery(
-    fn (Builder $query): Builder => $query->where('is_developer', true),
+LoginShortcutPlugin::make()->enabled(true)->usersUsingQuery(
+    fn (Builder $query): Builder => $query->where('is_admin', true),
 );
 ```
 
@@ -190,7 +190,7 @@ Domain matching is parameterized and suffix-based (`person@example.test` matches
 use App\Models\User;
 use Illuminate\Contracts\Auth\Authenticatable;
 
-DeveloperLoginPlugin::make()
+LoginShortcutPlugin::make()
     ->userModel(User::class)
     ->searchColumns(['email', 'name'])
     ->searchResultLimit(20)
@@ -210,7 +210,7 @@ The component refuses authenticated panel guards, uses the current panel's confi
 Events are `AutoLoginSucceeded`, `AutoLoginDenied`, and `AutoLoginFailed`. They contain identifiers (not email/name), panel, environment, timestamp, and a stable reason code where relevant. IP addresses are absent by default:
 
 ```php
-DeveloperLoginPlugin::make()
+LoginShortcutPlugin::make()
     ->logIpAddresses(false)
     ->transformIpAddressUsing(fn (?string $ip): ?string => $ip ? hash('sha256', $ip) : null);
 ```

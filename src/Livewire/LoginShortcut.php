@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin\Livewire;
+namespace OutatimeIo\FilamentLoginShortcut\Livewire;
 
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
@@ -17,16 +17,16 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
-use OutatimeIo\FilamentDeveloperLogin\DeveloperLoginPlugin;
-use OutatimeIo\FilamentDeveloperLogin\Events\AutoLoginDenied;
-use OutatimeIo\FilamentDeveloperLogin\Events\AutoLoginFailed;
-use OutatimeIo\FilamentDeveloperLogin\Events\AutoLoginSucceeded;
-use OutatimeIo\FilamentDeveloperLogin\Query\EligibleUsers;
-use OutatimeIo\FilamentDeveloperLogin\Support\Audit;
-use OutatimeIo\FilamentDeveloperLogin\Support\Availability;
-use OutatimeIo\FilamentDeveloperLogin\Support\Reason;
+use OutatimeIo\FilamentLoginShortcut\Events\AutoLoginDenied;
+use OutatimeIo\FilamentLoginShortcut\Events\AutoLoginFailed;
+use OutatimeIo\FilamentLoginShortcut\Events\AutoLoginSucceeded;
+use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
+use OutatimeIo\FilamentLoginShortcut\Query\EligibleUsers;
+use OutatimeIo\FilamentLoginShortcut\Support\Audit;
+use OutatimeIo\FilamentLoginShortcut\Support\Availability;
+use OutatimeIo\FilamentLoginShortcut\Support\Reason;
 
-final class DeveloperLogin extends Component implements HasForms
+final class LoginShortcut extends Component implements HasForms
 {
     use InteractsWithForms;
 
@@ -48,7 +48,7 @@ final class DeveloperLogin extends Component implements HasForms
             ->components([
                 Select::make('selectedIdentifier')
                     ->hiddenLabel()
-                    ->placeholder(__('filament-developer-login::messages.search_placeholder'))
+                    ->placeholder(__('filament-login-shortcut::messages.search_placeholder'))
                     ->searchable()
                     ->live()
                     ->native(false)
@@ -112,7 +112,7 @@ final class DeveloperLogin extends Component implements HasForms
 
     private function componentView(): View
     {
-        return view()->file(dirname(__DIR__, 2).'/resources/views/livewire/developer-login.blade.php', [
+        return view()->file(dirname(__DIR__, 2).'/resources/views/livewire/login-shortcut.blade.php', [
             'available' => $this->guardAvailable(),
             'nonLocal' => app()->environment() !== 'local',
             'environments' => implode(', ', $this->plugin()->environments()),
@@ -126,8 +126,8 @@ final class DeveloperLogin extends Component implements HasForms
         return $available && ! auth()->guard($this->panel()->getAuthGuard())->check();
     }
 
-    private function plugin(): DeveloperLoginPlugin
-    { /** @var DeveloperLoginPlugin $plugin */ $plugin = $this->panel()->getPlugin('filament-developer-login');
+    private function plugin(): LoginShortcutPlugin
+    { /** @var LoginShortcutPlugin $plugin */ $plugin = $this->panel()->getPlugin('filament-login-shortcut');
 
         return $plugin;
     }
@@ -137,7 +137,7 @@ final class DeveloperLogin extends Component implements HasForms
         return Filament::getPanel($this->panelId);
     }
 
-    private function label(Authenticatable $user, DeveloperLoginPlugin $plugin): string
+    private function label(Authenticatable $user, LoginShortcutPlugin $plugin): string
     {
         return (string) ($plugin->label() ? app()->call($plugin->label(), ['user' => $user]) : $user->getAttribute('email'));
     }
@@ -192,7 +192,7 @@ final class DeveloperLogin extends Component implements HasForms
 
     private function attempt(string $limit, string $reason): bool
     {
-        if (! RateLimiter::tooManyAttempts($this->key($limit), (int) config('filament-developer-login.rate_limits.'.$limit, 10))) {
+        if (! RateLimiter::tooManyAttempts($this->key($limit), (int) config('filament-login-shortcut.rate_limits.'.$limit, 10))) {
             return true;
         } $this->deny($reason);
 
@@ -201,19 +201,19 @@ final class DeveloperLogin extends Component implements HasForms
 
     private function key(string $operation): string
     {
-        return 'filament-developer-login:'.$operation.':'.$this->panelId.':'.hash('sha256', (string) request()->session()->getId().'|'.(string) request()->ip());
+        return 'filament-login-shortcut:'.$operation.':'.$this->panelId.':'.hash('sha256', (string) request()->session()->getId().'|'.(string) request()->ip());
     }
 
     private function deny(string $reason): null
     {
         app(Audit::class)->dispatch(new AutoLoginDenied($reason, $this->panelId, (string) app()->environment(), new \DateTimeImmutable, app(Audit::class)->ip($this->plugin(), request())), $this->plugin());
-        throw ValidationException::withMessages(['selectedIdentifier' => __('filament-developer-login::messages.unavailable')]);
+        throw ValidationException::withMessages(['selectedIdentifier' => __('filament-login-shortcut::messages.unavailable')]);
     }
 
     private function fail(string $reason): null
     {
         app(Audit::class)->dispatch(new AutoLoginFailed($reason, $this->panelId, (string) app()->environment(), new \DateTimeImmutable, app(Audit::class)->ip($this->plugin(), request())), $this->plugin());
-        throw ValidationException::withMessages(['selectedIdentifier' => __('filament-developer-login::messages.login_failed')]);
+        throw ValidationException::withMessages(['selectedIdentifier' => __('filament-login-shortcut::messages.login_failed')]);
     }
 
     private function safeDestination(): string

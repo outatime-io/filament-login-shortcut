@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin\Events;
+namespace OutatimeIo\FilamentLoginShortcut\Events;
 
 final readonly class AutoLoginSucceeded
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin\Tests\Fixtures;
+namespace OutatimeIo\FilamentLoginShortcut\Tests\Fixtures;
 
 use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;

@@ -2,23 +2,23 @@
 
 declare(strict_types=1);
 
-namespace OutatimeIo\FilamentDeveloperLogin\Support;
+namespace OutatimeIo\FilamentLoginShortcut\Support;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use OutatimeIo\FilamentDeveloperLogin\DeveloperLoginPlugin;
+use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
 
 final class Audit
 {
-    public function dispatch(object $event, DeveloperLoginPlugin $plugin): void
+    public function dispatch(object $event, LoginShortcutPlugin $plugin): void
     {
         event($event);
-        if ($channel = config('filament-developer-login.audit.log_channel')) {
-            Log::channel($channel)->info('filament-developer-login', ['event' => $event::class, 'reason' => $event->reason ?? 'succeeded', 'panel' => $event->panelId]);
+        if ($channel = config('filament-login-shortcut.audit.log_channel')) {
+            Log::channel($channel)->info('filament-login-shortcut', ['event' => $event::class, 'reason' => $event->reason ?? 'succeeded', 'panel' => $event->panelId]);
         }
     }
 
-    public function ip(DeveloperLoginPlugin $plugin, Request $request): ?string
+    public function ip(LoginShortcutPlugin $plugin, Request $request): ?string
     {
         if (! $plugin->shouldLogIps()) {
             return null;
