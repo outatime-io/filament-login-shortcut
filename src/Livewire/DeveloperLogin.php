@@ -14,10 +14,17 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use OutatimeIo\FilamentDeveloperLogin\DeveloperLoginPlugin;
+use OutatimeIo\FilamentDeveloperLogin\Events\AutoLoginDenied;
+use OutatimeIo\FilamentDeveloperLogin\Events\AutoLoginFailed;
+use OutatimeIo\FilamentDeveloperLogin\Events\AutoLoginSucceeded;
 use OutatimeIo\FilamentDeveloperLogin\Query\EligibleUsers;
+use OutatimeIo\FilamentDeveloperLogin\Support\Audit;
 use OutatimeIo\FilamentDeveloperLogin\Support\Availability;
+use OutatimeIo\FilamentDeveloperLogin\Support\Reason;
 
 final class DeveloperLogin extends Component implements HasForms
 {
@@ -61,12 +68,16 @@ final class DeveloperLogin extends Component implements HasForms
 
         $plugin = $this->plugin();
 
+        if (! $this->attempt('logins_per_minute', Reason::RATE_LIMITED)) {
+            return null;
+        }
+
         $this->validate(['data.selectedIdentifier' => ['required', 'string', 'max:255']]);
 
         $guard = auth()->guard($this->panel()->getAuthGuard());
 
         if ($guard->check()) {
-            return null;
+            return $this->deny(Reason::AUTHENTICATED);
         }
 
         $model = $plugin->model();
@@ -77,15 +88,19 @@ final class DeveloperLogin extends Component implements HasForms
         $user = app(EligibleUsers::class)->build($plugin)->where($identifierName, $this->data['selectedIdentifier'])->first();
 
         if (! $user instanceof Authenticatable) {
-            return null;
+            return $this->fail(Reason::INVALID_SELECTION);
         }
 
         if (method_exists($user, 'canAccessPanel') && ! $user->canAccessPanel($this->panel())) {
-            return null;
+            return $this->fail(Reason::PANEL_ACCESS_DENIED);
         }
 
         $guard->login($user);
         request()->session()->regenerate();
+
+        RateLimiter::hit($this->key('logins_per_minute'), 60);
+
+        app(Audit::class)->dispatch(new AutoLoginSucceeded($user::class, (string) $user->getAuthIdentifier(), $this->panelId, (string) app()->environment(), new \DateTimeImmutable, app(Audit::class)->ip($plugin, request())), $plugin);
 
         return $this->redirect($this->safeDestination());
     }
@@ -135,12 +150,14 @@ final class DeveloperLogin extends Component implements HasForms
         }
 
         $plugin = $this->plugin();
-        if (mb_strlen(trim($search)) < $plugin->minimumLength()) {
+        if (mb_strlen(trim($search)) < $plugin->minimumLength() || ! $this->attempt('searches_per_minute', Reason::RATE_LIMITED)) {
             return [];
         }
 
         /** @var Collection<int, Model&Authenticatable> $users */
         $users = app(EligibleUsers::class)->matching($plugin, trim($search))->limit($plugin->limit())->get();
+        RateLimiter::hit($this->key('searches_per_minute'), 60);
+
         return $users->mapWithKeys(fn (Authenticatable $user): array => [(string) $user->getAuthIdentifier() => $this->label($user, $plugin)])->all();
     }
 
@@ -171,6 +188,32 @@ final class DeveloperLogin extends Component implements HasForms
         $user = app(EligibleUsers::class)->build($this->plugin())->where((new $model)->getAuthIdentifierName(), $identifier)->first();
 
         return $user instanceof Authenticatable ? $this->label($user, $this->plugin()) : null;
+    }
+
+    private function attempt(string $limit, string $reason): bool
+    {
+        if (! RateLimiter::tooManyAttempts($this->key($limit), (int) config('filament-developer-login.rate_limits.'.$limit, 10))) {
+            return true;
+        } $this->deny($reason);
+
+        return false;
+    }
+
+    private function key(string $operation): string
+    {
+        return 'filament-developer-login:'.$operation.':'.$this->panelId.':'.hash('sha256', (string) request()->session()->getId().'|'.(string) request()->ip());
+    }
+
+    private function deny(string $reason): null
+    {
+        app(Audit::class)->dispatch(new AutoLoginDenied($reason, $this->panelId, (string) app()->environment(), new \DateTimeImmutable, app(Audit::class)->ip($this->plugin(), request())), $this->plugin());
+        throw ValidationException::withMessages(['selectedIdentifier' => __('filament-developer-login::messages.unavailable')]);
+    }
+
+    private function fail(string $reason): null
+    {
+        app(Audit::class)->dispatch(new AutoLoginFailed($reason, $this->panelId, (string) app()->environment(), new \DateTimeImmutable, app(Audit::class)->ip($this->plugin(), request())), $this->plugin());
+        throw ValidationException::withMessages(['selectedIdentifier' => __('filament-developer-login::messages.login_failed')]);
     }
 
     private function safeDestination(): string
