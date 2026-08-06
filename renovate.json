@@ -1,0 +1,65 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    ":semanticCommits",
+    ":semanticCommitTypeAll(chore)",
+    ":separateMajorReleases",
+    ":prHourlyLimitNone",
+    ":prConcurrentLimit10",
+    ":disableRateLimiting",
+    ":label(dependencies)"
+  ],
+  "description": "Renovate policy for a Composer library package with compatibility-first version range management.",
+  "enabledManagers": ["composer"],
+  "ignorePaths": [
+    "vendor/**"
+  ],
+  "schedule": [
+    "before 10am on thursday"
+  ],
+  "rangeStrategy": "widen",
+  "minimumReleaseAge": "3 days",
+  "rebaseWhen": "behind-base-branch",
+  "timezone": "Europe/Berlin",
+  "commitBodyTable": true,
+  "packageRules": [
+    {
+      "description": "Keep production dependency updates reviewable and compatibility-friendly.",
+      "matchManagers": ["composer"],
+      "matchDepTypes": ["require"],
+      "groupName": "composer production dependencies",
+      "groupSlug": "composer-production-dependencies"
+    },
+    {
+      "description": "Group development toolchain updates into a single PR.",
+      "matchManagers": ["composer"],
+      "matchDepTypes": ["require-dev"],
+      "groupName": "composer development dependencies",
+      "groupSlug": "composer-development-dependencies"
+    },
+    {
+      "description": "Keep major framework upgrades isolated for deliberate review.",
+      "matchManagers": ["composer"],
+      "matchPackageNames": [
+        "filament/filament",
+        "illuminate/support",
+        "orchestra/testbench",
+        "pestphp/pest",
+        "pestphp/pest-plugin-laravel",
+        "larastan/larastan"
+      ],
+      "matchUpdateTypes": ["major"],
+      "groupName": null
+    },
+    {
+      "description": "Use a fix commit type for security updates so they stand out in history.",
+      "matchManagers": ["composer"],
+      "matchDepTypes": ["require", "require-dev"],
+      "matchUpdateTypes": ["security"],
+      "semanticCommitType": "fix",
+      "labels": ["dependencies", "security"]
+    }
+  ]
+}
