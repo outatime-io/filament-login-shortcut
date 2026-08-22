@@ -54,6 +54,7 @@ jobs:
         with:
           php-version: ${{ matrix.php }}
           coverage: none
+          extensions: sqlite3, pdo_sqlite
       - run: >-
           composer require --no-update
           "laravel/framework:${{ matrix.laravel }}"
