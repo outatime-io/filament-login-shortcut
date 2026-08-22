@@ -19,12 +19,6 @@
   "rebaseWhen": "behind-base-branch",
   "timezone": "Europe/Berlin",
   "commitBodyTable": true,
-  "lockFileMaintenance": {
-    "enabled": true,
-    "schedule": [
-      "before 10am on thursday"
-    ]
-  },
   "vulnerabilityAlerts": {
     "labels": ["dependencies", "security"],
     "semanticCommitType": "fix"
