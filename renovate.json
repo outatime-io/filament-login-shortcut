@@ -25,6 +25,10 @@
       "before 10am on thursday"
     ]
   },
+  "vulnerabilityAlerts": {
+    "labels": ["dependencies", "security"],
+    "semanticCommitType": "fix"
+  },
   "packageRules": [
     {
       "description": "Keep production dependency updates reviewable and compatibility-friendly.",
@@ -64,14 +68,6 @@
       "matchUpdateTypes": ["major"],
       "groupName": "pest major dependencies",
       "groupSlug": "pest-major-dependencies"
-    },
-    {
-      "description": "Use a fix commit type for security updates so they stand out in history.",
-      "matchManagers": ["composer"],
-      "matchDepTypes": ["require", "require-dev"],
-      "matchUpdateTypes": ["security"],
-      "semanticCommitType": "fix",
-      "labels": ["dependencies", "security"]
     }
   ]
 }
