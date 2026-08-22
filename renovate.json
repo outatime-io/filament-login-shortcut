@@ -54,6 +54,17 @@
       "groupName": null
     },
     {
+      "description": "Group Pest and its Laravel plugin major upgrades together.",
+      "matchManagers": ["composer"],
+      "matchPackageNames": [
+        "pestphp/pest",
+        "pestphp/pest-plugin-laravel"
+      ],
+      "matchUpdateTypes": ["major"],
+      "groupName": "pest major dependencies",
+      "groupSlug": "pest-major-dependencies"
+    },
+    {
       "description": "Use a fix commit type for security updates so they stand out in history.",
       "matchManagers": ["composer"],
       "matchDepTypes": ["require", "require-dev"],
