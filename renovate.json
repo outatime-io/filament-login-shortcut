@@ -2,20 +2,15 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    ":dependencyDashboard",
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)",
     ":separateMajorReleases",
     ":prHourlyLimitNone",
     ":prConcurrentLimit10",
-    ":disableRateLimiting",
     ":label(dependencies)"
   ],
   "description": "Renovate policy for a Composer library package with compatibility-first version range management.",
   "enabledManagers": ["composer"],
-  "ignorePaths": [
-    "vendor/**"
-  ],
   "schedule": [
     "before 10am on thursday"
   ],
