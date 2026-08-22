@@ -10,7 +10,7 @@
     ":label(dependencies)"
   ],
   "description": "Renovate policy for a Composer library package with compatibility-first version range management.",
-  "enabledManagers": ["composer"],
+  "enabledManagers": ["composer", "github-actions"],
   "schedule": [
     "before 10am on thursday"
   ],
@@ -62,6 +62,12 @@
       "matchUpdateTypes": ["major"],
       "groupName": "pest major dependencies",
       "groupSlug": "pest-major-dependencies"
+    },
+    {
+      "description": "Group pinned GitHub Actions SHA bumps into a single PR.",
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions",
+      "groupSlug": "github-actions"
     }
   ]
 }
