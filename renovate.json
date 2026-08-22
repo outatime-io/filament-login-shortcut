@@ -2,20 +2,15 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended",
-    ":dependencyDashboard",
     ":semanticCommits",
     ":semanticCommitTypeAll(chore)",
     ":separateMajorReleases",
     ":prHourlyLimitNone",
     ":prConcurrentLimit10",
-    ":disableRateLimiting",
     ":label(dependencies)"
   ],
   "description": "Renovate policy for a Composer library package with compatibility-first version range management.",
   "enabledManagers": ["composer"],
-  "ignorePaths": [
-    "vendor/**"
-  ],
   "schedule": [
     "before 10am on thursday"
   ],
@@ -24,6 +19,16 @@
   "rebaseWhen": "behind-base-branch",
   "timezone": "Europe/Berlin",
   "commitBodyTable": true,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 10am on thursday"
+    ]
+  },
+  "vulnerabilityAlerts": {
+    "labels": ["dependencies", "security"],
+    "semanticCommitType": "fix"
+  },
   "packageRules": [
     {
       "description": "Keep production dependency updates reviewable and compatibility-friendly.",
@@ -54,12 +59,15 @@
       "groupName": null
     },
     {
-      "description": "Use a fix commit type for security updates so they stand out in history.",
+      "description": "Group Pest and its Laravel plugin major upgrades together.",
       "matchManagers": ["composer"],
-      "matchDepTypes": ["require", "require-dev"],
-      "matchUpdateTypes": ["security"],
-      "semanticCommitType": "fix",
-      "labels": ["dependencies", "security"]
+      "matchPackageNames": [
+        "pestphp/pest",
+        "pestphp/pest-plugin-laravel"
+      ],
+      "matchUpdateTypes": ["major"],
+      "groupName": "pest major dependencies",
+      "groupSlug": "pest-major-dependencies"
     }
   ]
 }
