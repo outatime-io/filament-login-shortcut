@@ -46,27 +46,45 @@ Filament v3 is intentionally unsupported. CI exercises representative lowest/cur
 
 ## Installation
 
+Install the package as a development dependency:
+
 ```bash
 composer require --dev outatime-io/filament-login-shortcut
+```
+
+Laravel package discovery registers the service provider automatically; no manual provider registration is required.
+
+Optionally publish the configuration file if you want to override the documented fallback defaults:
+
+```bash
 php artisan vendor:publish --tag=filament-login-shortcut-config
 ```
 
-Install this package as a development dependency by default. Deploy production and staging with `composer install --no-dev --optimize-autoloader`; this keeps the passwordless login code out of those deployments entirely.
+Deploy production and staging with `composer install --no-dev --optimize-autoloader`; this keeps the passwordless login code out of those deployments entirely.
 
 Use a normal dependency only when you intentionally need the login shortcut in a non-local environment, such as a protected staging system. In that case, configure an explicit non-local authorization callback and ensure the package is installed in that environment.
 
 ## Basic usage
 
-Register it independently on every intended panel:
+Register the plugin on every intended panel in its panel provider:
 
 ```php
+use Filament\Panel;
 use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
 
-$panel->plugin(
-    LoginShortcutPlugin::make()
-        ->enabled(),
-);
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->plugins([
+            LoginShortcutPlugin::make()
+                ->enabled(),
+        ]);
+}
 ```
+
+The feature is off unless `enabled()` is called — even locally.
+
+On the login screen, the plugin renders a **Login shortcut** block above the normal login form with a user search field. It lists eligible users immediately; typing filters them by the configured search columns (email by default). Pick an account and press **Login as user**: you are signed in as that user and redirected to the intended URL or the panel. If the panel guard already has an authenticated session, the block does not render.
 
 The plugin uses Filament's documented `AUTH_LOGIN_FORM_BEFORE` hook, so it appears before the normal form without replacing it. A shared Livewire component provides debounced, bounded search. The v4/v5 integration is deliberately limited to this common public render-hook and panel-guard API; all availability, query, and login logic is version-neutral.
 
