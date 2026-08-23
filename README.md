@@ -20,7 +20,7 @@
 ---
 
 > [!WARNING]
-> This package provides passwordless sign-in as any eligible user account. Enabling it outside a local environment can grant access to privileged accounts. Non-local use requires an application-defined authorization callback plus appropriate network and organizational controls. Production use should generally remain disabled, even though deliberate production activation is technically possible.
+> This package provides passwordless sign-in as any eligible user account. Enabling it outside a local environment can grant access to privileged accounts. Non-local use requires explicit authorization through the built-in IP allow-list or an application-defined authorization callback, plus appropriate network and organizational controls. Production use should generally remain disabled, even though deliberate production activation is technically possible.
 
 <div align="center">
 
@@ -30,13 +30,13 @@
 
 Filament Login Shortcut is a plugin for [Filament](https://filamentphp.com) panels that adds a passwordless sign-in shortcut to the panel login screen: an authorized visitor picks an eligible user account from a searchable select and signs in as that user without entering a password. It removes the friction of repeatedly typing credentials while developing or testing an application.
 
-The shortcut ships disabled, must be enabled explicitly per panel, refuses to render outside explicitly allowed environments unless an application-defined authorization callback approves the request, and never bypasses `canAccessPanel()`.
+The shortcut ships disabled, must be enabled explicitly per panel, refuses to render outside explicitly allowed environments unless the built-in IP allow-list or an application-defined authorization callback approves the request, and never bypasses `canAccessPanel()`.
 
 ## Features
 
 - **Searchable sign-in selector** rendered before the panel login form via Filament's documented `AUTH_LOGIN_FORM_BEFORE` render hook
 - **Explicit opt-in** per panel; disabled by default
-- **Fail-closed authorization**: environment allow-list with a mandatory callback outside `local`
+- **Fail-closed authorization**: environment allow-list with a mandatory IP allow-list or callback outside `local`
 - **Four mutually exclusive eligibility strategies**: all users, exact email addresses, email domains, custom query
 - **Tunable search**: columns, result limit, minimum search length, debounce
 - **Rate limiting** per panel, session, and IP for searches and logins
@@ -103,22 +103,34 @@ The plugin uses Filament's documented `AUTH_LOGIN_FORM_BEFORE` hook, so it appea
 
 Environment variables are deliberately not supported: `FILAMENT_LOGIN_SHORTCUT_ENABLED` and `FILAMENT_LOGIN_SHORTCUT_ALLOWED_ENVIRONMENTS` do nothing, so availability cannot be toggled per deployment by accident. Local is always allowed once the plugin is enabled, so a local-only setup needs nothing beyond the registration shown above:
 
-To allow a non-local environment, include its exact name in the panel-provider allow-list. An authorization callback is mandatory outside `local` and is re-evaluated for render, each search, and submit:
+To allow a non-local environment, include its exact name in the panel-provider allow-list. Explicit authorization is mandatory outside `local` and is re-evaluated for render, each search, and submit: either the built-in IP allow-list or an authorization callback. The IP allow-list covers the overwhelmingly common policy of restricting access to specific source addresses:
 
 ```php
 use Filament\Panel;
-use Illuminate\Http\Request;
 
 LoginShortcutPlugin::make()
     ->enabled(true)
     ->allowedEnvironments(['local', 'staging'])
+    ->allowedIps(['10.0.0.5', '203.0.113.7']);
+```
+
+`allowedIps()` performs exact matches against `request()->ip()`; trusted-proxy configuration therefore governs what that returns, and the package never parses `X-Forwarded-For` itself. Entries are trimmed, validated, and canonicalized — `2001:0DB8::7` and its fully expanded spelling both match a client reported as `2001:db8::7`; empty or malformed values throw `InvalidConfiguration`. An explicitly empty list denies every non-local client. Pass a closure returning the list when it must be resolved per request, e.g. from configuration; resolution errors are reported through the exception handler and fail closed to a denying empty list:
+
+```php
+use Illuminate\Http\Request;
+use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
+
+LoginShortcutPlugin::make()
+    ->enabled(true)
+    ->allowedEnvironments(['local', 'staging'])
+    ->allowedIps(fn (): array => config('services.login_shortcut.allowed_ips', []))
+    // Composes with any explicit callback: both must pass.
     ->authorizeUsing(
-        fn (Request $request, Panel $panel, string $environment): bool => $environment === 'local'
-            || in_array($request->ip(), config('services.login_shortcut.allowed_ips', []), true),
+        fn (Request $request): bool => $request->hasHeader('X-My-Proxy-Assertion'),
     );
 ```
 
-Good policies include a VPN/private-network check, an application access policy, or an identity-aware proxy assertion. Do not trust `X-Forwarded-For` or similar headers unless Laravel trusted proxies are configured correctly. Exceptions fail closed. A translated warning is displayed whenever an authorized non-local component renders.
+Other good policies include a VPN/private-network check, an application access policy, or an identity-aware proxy assertion. Do not trust `X-Forwarded-For` or similar headers unless Laravel trusted proxies are configured correctly. Exceptions fail closed. A translated warning is displayed whenever an authorized non-local component renders.
 
 ## Eligible users and search
 
@@ -190,7 +202,8 @@ All fluent methods return the plugin instance, so they can be chained in a panel
 | `minimumSearchLength(int $length)` | Positive integer | `1` | Suppresses remote search below this character count. |
 | `searchDebounce(int $milliseconds)` | Integer at least zero | `300` | Sets the search debounce interval in milliseconds. |
 | `userLabelUsing(Closure $callback)` | `fn (Authenticatable $user): string` | User `email` | Produces the visible user label. |
-| `authorizeUsing(Closure $callback)` | `fn (Request $request, Panel $panel, string $environment): bool` | none | Required outside local; use IP/VPN, policy, or proxy authorization. `false` or exceptions deny access. |
+| `authorizeUsing(Closure $callback)` | `fn (Request $request, Panel $panel, string $environment): bool` | none | Required outside local unless `allowedIps()` is set; use IP/VPN, policy, or proxy authorization. `false` or exceptions deny access. Composes with `allowedIps()`: both must pass. |
+| `allowedIps(array\|Closure $ips)` | Exact IP addresses, or a callback returning them | none | Built-in source-IP allow-list enforced outside `local` via exact match against `request()->ip()`. Satisfies the non-local authorization requirement on its own and composes with `authorizeUsing()` (both must pass). Entries are canonicalized so equivalent IPv6 spellings match; empty or malformed entries throw `InvalidConfiguration`; an explicitly empty list denies all non-local clients; closure errors are reported and fail closed. Ignored in `local`. |
 | `allUsers()` | none | active default strategy | Lists every configured-model user. It never filters the Select by `canAccessPanel()`. Replaces another strategy. |
 | `usersWithEmails(array $emails)` | Exact email addresses | none | Restricts eligible users to these addresses. Replaces another strategy. |
 | `usersWithEmailDomains(array $domains)` | Exact domains, optional `@` | none | Restricts eligible users to these domain suffixes. Replaces another strategy. |
@@ -234,6 +247,7 @@ These public methods exist for Filament and the package's Livewire/query service
 | `debounce()` | `int` | Resolves the debounce interval. |
 | `label()` | `?Closure` | Returns the optional user-label callback. |
 | `authorization()` | `?Closure` | Returns the optional authorization callback. |
+| `ipAllowlist()` | `?array` | Resolves the normalized built-in IP allow-list, if set. Closure results are validated at resolution time; errors yield an empty, denying list and are reported. |
 | `query()` | `?Closure` | Returns the custom-query strategy callback, if set. |
 | `emails()` | `?array` | Returns the exact-email strategy list, if set. |
 | `domains()` | `?array` | Returns the domain strategy list, if set. |
