@@ -1,6 +1,8 @@
+<div align="center">
+
 # Filament Login Shortcut
 
-A secure login shortcut selector for Filament panels.
+**A secure login shortcut selector for Filament panels.**
 
 [![Plumb score](https://plumbphp.dev/badges/outatime-io/filament-login-shortcut/composite.svg)](https://plumbphp.dev/outatime-io/filament-login-shortcut)
 [![Plumb security score](https://plumbphp.dev/badges/outatime-io/filament-login-shortcut/security.svg)](https://plumbphp.dev/outatime-io/filament-login-shortcut)
@@ -13,6 +15,10 @@ A secure login shortcut selector for Filament panels.
 [![License](https://img.shields.io/packagist/l/outatime-io/filament-login-shortcut.svg)](LICENSE.md)
 [![Tests](https://github.com/outatime-io/filament-login-shortcut/actions/workflows/tests.yml/badge.svg)](https://github.com/outatime-io/filament-login-shortcut/actions/workflows/tests.yml)
 
+</div>
+
+---
+
 > [!WARNING]
 > This package provides passwordless sign-in as any eligible user account. Enabling it outside a local environment can grant access to privileged accounts. Non-local use requires an application-defined authorization callback plus appropriate network and organizational controls. Production use should generally remain disabled, even though deliberate production activation is technically possible.
 
@@ -22,15 +28,15 @@ The shortcut ships disabled, must be enabled explicitly per panel, refuses to re
 
 ## Features
 
-- Searchable "login as user" selector rendered before the panel login form via Filament's documented `AUTH_LOGIN_FORM_BEFORE` render hook
-- Explicit opt-in per panel; disabled by default
-- Environment allow-list with a mandatory, fail-closed authorization callback outside `local`
-- Four mutually exclusive eligibility strategies: all users, exact email addresses, email domains, custom query
-- Tunable search: columns, result limit, minimum search length, debounce
-- Rate limiting per panel, session, and IP for searches and logins
-- Audit events with data minimization: no IP addresses logged by default
-- Session regeneration on login and same-host redirect protection
-- Works with Filament v4 and v5 on PHP 8.2–8.5
+- **Searchable sign-in selector** rendered before the panel login form via Filament's documented `AUTH_LOGIN_FORM_BEFORE` render hook
+- **Explicit opt-in** per panel; disabled by default
+- **Fail-closed authorization**: environment allow-list with a mandatory callback outside `local`
+- **Four mutually exclusive eligibility strategies**: all users, exact email addresses, email domains, custom query
+- **Tunable search**: columns, result limit, minimum search length, debounce
+- **Rate limiting** per panel, session, and IP for searches and logins
+- **Minimal audit data**: events carry identifiers, never emails or names; no IP addresses logged by default
+- **Hardened sessions**: regeneration on login and same-host redirect protection
+- **Broad compatibility**: Filament v4 and v5 on PHP 8.2–8.5
 
 ## Compatibility
 
@@ -268,4 +274,4 @@ Notable changes are documented in the [changelog](CHANGELOG.md).
 
 ## License
 
-MIT. See [LICENSE.md](LICENSE.md).
+Released under the [MIT license](LICENSE.md).
