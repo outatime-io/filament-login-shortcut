@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Filament\Facades\Filament;
 use Filament\Panel;
 use Filament\PanelRegistry;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -146,3 +147,35 @@ it('rate limits login attempts and audits the denial', function (): void {
     expect(auth()->check())->toBeFalse();
     Event::assertDispatched(AutoLoginDenied::class, fn (AutoLoginDenied $event): bool => $event->reason === Reason::RATE_LIMITED && $event->panelId === 'admin');
 });
+
+it('serves the shortcut only to allow-listed client IPs when no authorization callback is set', function (): void {
+    User::query()->create(['email' => 'alice@example.test']);
+
+    $panel = Panel::make()
+        ->id('restricted')
+        ->path('restricted')
+        ->plugin(
+            LoginShortcutPlugin::make()
+                ->enabled(true)
+                ->allowedEnvironments(['testing'])
+                ->allowedIps(['10.0.0.5'])
+                ->allUsers()
+        );
+
+    app(PanelRegistry::class)->register($panel);
+    $panel->boot();
+
+    $denied = loginShortcutComponentFor('restricted');
+    $allowed = loginShortcutComponentFor('restricted');
+
+    app()->instance('request', Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '192.0.2.99']));
+    expect(searchResults($denied, 'alice'))->toBe([]);
+
+    app()->instance('request', Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '10.0.0.5']));
+    expect(array_values(searchResults($allowed, 'alice')))->toBe(['alice@example.test']);
+});
+
+function loginShortcutComponentFor(string $panelId): Testable
+{
+    return Livewire::test(LoginShortcut::class, ['panelId' => $panelId]);
+}
