@@ -41,7 +41,7 @@ The shortcut ships disabled, must be enabled explicitly per panel, refuses to re
 | Livewire | 3.x with Filament 4; 4.x with Filament 5 |
 | Filament | 4.x and 5.x |
 
-Filament v3 is intentionally unsupported. CI exercises representative lowest/current Laravel and PHP combinations for both Filament majors.
+Filament v3 is intentionally unsupported. CI tests representative combinations of the lowest and current supported Laravel and PHP versions for both Filament majors.
 
 ## Installation
 
@@ -85,16 +85,11 @@ The feature is off unless `enabled()` is called — even locally.
 
 On the login screen, the plugin renders a **Login shortcut** block above the normal login form with a user search field. It lists eligible users immediately; typing filters them by the configured search columns (email by default). Pick an account and press **Login as user**: you are signed in as that user and redirected to the intended URL or the panel. If the panel guard already has an authenticated session, the block does not render.
 
-The plugin uses Filament's documented `AUTH_LOGIN_FORM_BEFORE` hook, so it appears before the normal form without replacing it. A shared Livewire component provides debounced, bounded search. The v4/v5 integration is deliberately limited to this common public render-hook and panel-guard API; all availability, query, and login logic is version-neutral.
+The plugin uses Filament's documented `AUTH_LOGIN_FORM_BEFORE` hook, so it appears before the normal form without replacing it. A shared Livewire component provides debounced, bounded search.
 
 ## Enablement and environments
 
-The feature is off by default and can only be enabled in the panel provider. `FILAMENT_LOGIN_SHORTCUT_ENABLED` and `FILAMENT_LOGIN_SHORTCUT_ALLOWED_ENVIRONMENTS` are not supported. Local is always allowed once explicitly enabled, so no environment configuration is needed for a local-only setup:
-
-```php
-LoginShortcutPlugin::make()
-    ->enabled();
-```
+Environment variables are deliberately not supported: `FILAMENT_LOGIN_SHORTCUT_ENABLED` and `FILAMENT_LOGIN_SHORTCUT_ALLOWED_ENVIRONMENTS` do nothing, so availability cannot be toggled per deployment by accident. Local is always allowed once the plugin is enabled, so a local-only setup needs nothing beyond the registration shown above:
 
 To allow a non-local environment, include its exact name in the panel-provider allow-list. An authorization callback is mandatory outside `local` and is re-evaluated for render, each search, and submit:
 
