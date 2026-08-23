@@ -6,9 +6,10 @@
             </x-slot>
 
             @if ($nonLocal)
-                <x-filament::callout color="warning">
-                    {{ __('filament-login-shortcut::messages.warning', ['environments' => $environments]) }}
-                </x-filament::callout>
+                <x-filament::callout
+                    color="warning"
+                    :description="__('filament-login-shortcut::messages.warning', ['environments' => $environments])"
+                />
             @endif
 
             <div style="display: grid; gap: 1rem;">
