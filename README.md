@@ -6,6 +6,22 @@ A secure login shortcut selector for Filament panels.
 
 Production use should generally remain disabled, even though deliberate production activation is technically possible.
 
+Filament Login Shortcut is a plugin for [Filament](https://filamentphp.com) panels that adds a passwordless sign-in shortcut to the panel login screen: an authorized visitor picks an eligible user account from a searchable select and signs in as that user without entering a password. It removes the friction of repeatedly typing credentials while developing or testing an application.
+
+The shortcut ships disabled, must be enabled explicitly per panel, refuses to render outside explicitly allowed environments unless an application-defined authorization callback approves the request, and never bypasses `canAccessPanel()`.
+
+## Features
+
+- Searchable "login as user" selector rendered before the panel login form via Filament's documented `AUTH_LOGIN_FORM_BEFORE` render hook
+- Explicit opt-in per panel; disabled by default
+- Environment allow-list with a mandatory, fail-closed authorization callback outside `local`
+- Four mutually exclusive eligibility strategies: all users, exact email addresses, email domains, custom query
+- Tunable search: columns, result limit, minimum search length, debounce
+- Rate limiting per panel, session, and IP for searches and logins
+- Audit events with data minimization: no IP addresses logged by default
+- Session regeneration on login and same-host redirect protection
+- Works with Filament v4 and v5 on PHP 8.2–8.5
+
 ## Compatibility
 
 | Package | Supported versions |
@@ -27,6 +43,8 @@ php artisan vendor:publish --tag=filament-login-shortcut-config
 Install this package as a development dependency by default. Deploy production and staging with `composer install --no-dev --optimize-autoloader`; this keeps the passwordless login code out of those deployments entirely.
 
 Use a normal dependency only when you intentionally need the login shortcut in a non-local environment, such as a protected staging system. In that case, configure an explicit non-local authorization callback and ensure the package is installed in that environment.
+
+## Basic usage
 
 Register it independently on every intended panel:
 
@@ -221,11 +239,17 @@ Set `audit.log_channel` in package configuration for optional concise log record
 
 You remain responsible for lawful purpose, access controls, log security, retention, deletion, incident review, and any IP-address processing. This package follows data minimization but does not itself make an application GDPR compliant.
 
-## Testing, contributing, and releases
+## Testing
 
-Run `composer validate`, `composer format`, `composer analyse`, and `composer test`. The GitHub workflow covers Filament 4 and 5; it excludes Filament 3. See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CHANGELOG.md](CHANGELOG.md), and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+Run `composer validate`, `composer format`, `composer analyse`, and `composer test`. The GitHub workflow covers representative PHP, Laravel, and Filament combinations from the compatibility table above.
 
-Before publication, configure the final GitHub/Packagist metadata and security contact.
+## Contributing and security
+
+Bug reports and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Please report suspected vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+
+## Changelog
+
+Notable changes are documented in the [changelog](CHANGELOG.md).
 
 ## License
 
