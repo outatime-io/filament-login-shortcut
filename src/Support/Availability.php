@@ -18,7 +18,18 @@ final class Availability
             return false;
         }
 
-        if ($environment !== 'local' && $plugin->authorization() === null) {
+        if ($environment === 'local') {
+            return $plugin->authorization() === null || $this->evaluate($plugin->authorization(), $request, $panel, $environment);
+        }
+
+        $allowlist = $plugin->ipAllowlist();
+        $clientIp = IpAddress::canonical($request->ip());
+
+        if ($allowlist !== null && ($clientIp === null || ! in_array($clientIp, $allowlist, true))) {
+            return false;
+        }
+
+        if ($allowlist === null && $plugin->authorization() === null) {
             return false;
         }
 

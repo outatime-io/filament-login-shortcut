@@ -2,6 +2,10 @@
 
 All notable changes will be documented in this file. This project follows Semantic Versioning.
 
+## v1.1.0
+
+- Added `allowedIps()` for a built-in, exact-match client IP allow-list that satisfies the mandatory non-local authorization on its own and composes with `authorizeUsing()` under AND semantics (#12). Entries are canonicalized so equivalent IPv6 spellings match; closure resolution errors are reported and fail closed.
+
 ## v1.0.1
 
 - Added PHP 8.5 to the tested compatibility matrix and compatibility documentation.
