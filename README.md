@@ -22,6 +22,12 @@
 > [!WARNING]
 > This package provides passwordless sign-in as any eligible user account. Enabling it outside a local environment can grant access to privileged accounts. Non-local use requires an application-defined authorization callback plus appropriate network and organizational controls. Production use should generally remain disabled, even though deliberate production activation is technically possible.
 
+<div align="center">
+
+<img src="docs/images/login-shortcut.png" alt="Login shortcut selector filtering eligible users by email" width="720">
+
+</div>
+
 Filament Login Shortcut is a plugin for [Filament](https://filamentphp.com) panels that adds a passwordless sign-in shortcut to the panel login screen: an authorized visitor picks an eligible user account from a searchable select and signs in as that user without entering a password. It removes the friction of repeatedly typing credentials while developing or testing an application.
 
 The shortcut ships disabled, must be enabled explicitly per panel, refuses to render outside explicitly allowed environments unless an application-defined authorization callback approves the request, and never bypasses `canAccessPanel()`.
