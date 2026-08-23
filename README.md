@@ -9,6 +9,7 @@
 [![Plumb maintenance score](https://plumbphp.dev/badges/outatime-io/filament-login-shortcut/maintenance.svg)](https://plumbphp.dev/outatime-io/filament-login-shortcut)
 [![Plumb ecosystem score](https://plumbphp.dev/badges/outatime-io/filament-login-shortcut/ecosystem.svg)](https://plumbphp.dev/outatime-io/filament-login-shortcut)
 [![Scanned by Plumb](https://plumbphp.dev/badges/outatime-io/filament-login-shortcut/scanned.svg)](https://plumbphp.dev/outatime-io/filament-login-shortcut)
+
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/outatime-io/filament-login-shortcut.svg)](https://packagist.org/packages/outatime-io/filament-login-shortcut)
 [![Total Downloads](https://img.shields.io/packagist/dt/outatime-io/filament-login-shortcut.svg)](https://packagist.org/packages/outatime-io/filament-login-shortcut)
 [![PHP Version](https://img.shields.io/packagist/php-v/outatime-io/filament-login-shortcut.svg)](https://packagist.org/packages/outatime-io/filament-login-shortcut)
