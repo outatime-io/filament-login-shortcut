@@ -55,7 +55,9 @@ function rateLimitKey(string $operation): string
 }
 
 it('renders the non-local warning text in the callout', function (): void {
-    loginShortcutComponent()->assertSee('Warning: Passwordless login shortcut is enabled for: testing.');
+    loginShortcutComponent()
+        ->assertSee('Warning: Passwordless login shortcut is enabled for: testing.')
+        ->assertSee('style="display: grid; gap: 1rem;"', escape: false);
 });
 
 it('searches eligible users case-insensitively, respects the result limit, and records the search attempt', function (): void {
