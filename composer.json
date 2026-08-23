@@ -4,6 +4,9 @@
   "homepage": "https://github.com/outatime-io/filament-login-shortcut",
   "keywords": ["laravel", "filament", "filament-plugin", "login-shortcut", "development", "testing"],
   "license": "MIT",
+  "authors": [
+    {"name": "outatime-io", "homepage": "https://github.com/outatime-io"}
+  ],
   "support": {
     "issues": "https://github.com/outatime-io/filament-login-shortcut/issues",
     "source": "https://github.com/outatime-io/filament-login-shortcut"

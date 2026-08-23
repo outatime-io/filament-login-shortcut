@@ -1,10 +1,48 @@
+<div align="center">
+
 # Filament Login Shortcut
 
-A secure login shortcut selector for Filament panels.
+**A secure login shortcut selector for Filament panels.**
 
-> **Security warning:** This package provides a passwordless sign-in shortcut. Enabling it outside a local environment can grant access to privileged user accounts. Non-local use requires an application-defined authorization callback and appropriate network and organizational controls.
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/outatime-io/filament-login-shortcut.svg)](https://packagist.org/packages/outatime-io/filament-login-shortcut)
+[![Total Downloads](https://img.shields.io/packagist/dt/outatime-io/filament-login-shortcut.svg)](https://packagist.org/packages/outatime-io/filament-login-shortcut)
+[![PHP Version](https://img.shields.io/packagist/php-v/outatime-io/filament-login-shortcut.svg)](https://packagist.org/packages/outatime-io/filament-login-shortcut)
+[![License](https://img.shields.io/packagist/l/outatime-io/filament-login-shortcut.svg)](LICENSE.md)
+[![Tests](https://github.com/outatime-io/filament-login-shortcut/actions/workflows/tests.yml/badge.svg)](https://github.com/outatime-io/filament-login-shortcut/actions/workflows/tests.yml)
 
-Production use should generally remain disabled, even though deliberate production activation is technically possible.
+[![Plumb score](https://plumbphp.dev/badges/outatime-io/filament-login-shortcut/composite.svg)](https://plumbphp.dev/outatime-io/filament-login-shortcut)
+[![Plumb security score](https://plumbphp.dev/badges/outatime-io/filament-login-shortcut/security.svg)](https://plumbphp.dev/outatime-io/filament-login-shortcut)
+[![Plumb maintenance score](https://plumbphp.dev/badges/outatime-io/filament-login-shortcut/maintenance.svg)](https://plumbphp.dev/outatime-io/filament-login-shortcut)
+[![Plumb ecosystem score](https://plumbphp.dev/badges/outatime-io/filament-login-shortcut/ecosystem.svg)](https://plumbphp.dev/outatime-io/filament-login-shortcut)
+
+</div>
+
+---
+
+> [!WARNING]
+> This package provides passwordless sign-in as any eligible user account. Enabling it outside a local environment can grant access to privileged accounts. Non-local use requires an application-defined authorization callback plus appropriate network and organizational controls. Production use should generally remain disabled, even though deliberate production activation is technically possible.
+
+<div align="center">
+
+<img src="docs/images/login-shortcut.png" alt="Login shortcut selector filtering eligible users by email" width="720">
+
+</div>
+
+Filament Login Shortcut is a plugin for [Filament](https://filamentphp.com) panels that adds a passwordless sign-in shortcut to the panel login screen: an authorized visitor picks an eligible user account from a searchable select and signs in as that user without entering a password. It removes the friction of repeatedly typing credentials while developing or testing an application.
+
+The shortcut ships disabled, must be enabled explicitly per panel, refuses to render outside explicitly allowed environments unless an application-defined authorization callback approves the request, and never bypasses `canAccessPanel()`.
+
+## Features
+
+- **Searchable sign-in selector** rendered before the panel login form via Filament's documented `AUTH_LOGIN_FORM_BEFORE` render hook
+- **Explicit opt-in** per panel; disabled by default
+- **Fail-closed authorization**: environment allow-list with a mandatory callback outside `local`
+- **Four mutually exclusive eligibility strategies**: all users, exact email addresses, email domains, custom query
+- **Tunable search**: columns, result limit, minimum search length, debounce
+- **Rate limiting** per panel, session, and IP for searches and logins
+- **Minimal audit data**: events carry identifiers, never emails or names; no IP addresses logged by default
+- **Hardened sessions**: regeneration on login and same-host redirect protection
+- **Broad compatibility**: Filament v4 and v5 on PHP 8.2–8.5
 
 ## Compatibility
 
@@ -15,40 +53,55 @@ Production use should generally remain disabled, even though deliberate producti
 | Livewire | 3.x with Filament 4; 4.x with Filament 5 |
 | Filament | 4.x and 5.x |
 
-Filament v3 is intentionally unsupported. CI exercises representative lowest/current Laravel and PHP combinations for both Filament majors.
+Filament v3 is intentionally unsupported. CI tests representative combinations of the lowest and current supported Laravel and PHP versions for both Filament majors.
 
 ## Installation
 
+Install the package as a development dependency:
+
 ```bash
 composer require --dev outatime-io/filament-login-shortcut
+```
+
+Laravel package discovery registers the service provider automatically; no manual provider registration is required.
+
+Optionally publish the configuration file if you want to override the documented fallback defaults:
+
+```bash
 php artisan vendor:publish --tag=filament-login-shortcut-config
 ```
 
-Install this package as a development dependency by default. Deploy production and staging with `composer install --no-dev --optimize-autoloader`; this keeps the passwordless login code out of those deployments entirely.
+Deploy production and staging with `composer install --no-dev --optimize-autoloader`; this keeps the passwordless login code out of those deployments entirely.
 
 Use a normal dependency only when you intentionally need the login shortcut in a non-local environment, such as a protected staging system. In that case, configure an explicit non-local authorization callback and ensure the package is installed in that environment.
 
-Register it independently on every intended panel:
+## Basic usage
+
+Register the plugin on every intended panel in its panel provider:
 
 ```php
+use Filament\Panel;
 use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
 
-$panel->plugin(
-    LoginShortcutPlugin::make()
-        ->enabled(),
-);
+public function panel(Panel $panel): Panel
+{
+    return $panel
+        ->plugins([
+            LoginShortcutPlugin::make()
+                ->enabled(),
+        ]);
+}
 ```
 
-The plugin uses Filament's documented `AUTH_LOGIN_FORM_BEFORE` hook, so it appears before the normal form without replacing it. A shared Livewire component provides debounced, bounded search. The v4/v5 integration is deliberately limited to this common public render-hook and panel-guard API; all availability, query, and login logic is version-neutral.
+The feature is off unless `enabled()` is called — even locally.
 
-## Safe defaults and environments
+On the login screen, the plugin renders a **Login shortcut** block above the normal login form with a user search field. It lists eligible users immediately; typing filters them by the configured search columns (email by default). Pick an account and press **Login as user**: you are signed in as that user and redirected to the intended URL or the panel. If the panel guard already has an authenticated session, the block does not render.
 
-The feature is off by default and can only be enabled in the panel provider. `FILAMENT_LOGIN_SHORTCUT_ENABLED` and `FILAMENT_LOGIN_SHORTCUT_ALLOWED_ENVIRONMENTS` are not supported. Local is always allowed once explicitly enabled, so no environment configuration is needed for a local-only setup:
+The plugin uses Filament's documented `AUTH_LOGIN_FORM_BEFORE` hook, so it appears before the normal form without replacing it. A shared Livewire component provides debounced, bounded search.
 
-```php
-LoginShortcutPlugin::make()
-    ->enabled();
-```
+## Enablement and environments
+
+Environment variables are deliberately not supported: `FILAMENT_LOGIN_SHORTCUT_ENABLED` and `FILAMENT_LOGIN_SHORTCUT_ALLOWED_ENVIRONMENTS` do nothing, so availability cannot be toggled per deployment by accident. Local is always allowed once the plugin is enabled, so a local-only setup needs nothing beyond the registration shown above:
 
 To allow a non-local environment, include its exact name in the panel-provider allow-list. An authorization callback is mandatory outside `local` and is re-evaluated for render, each search, and submit:
 
@@ -67,9 +120,64 @@ LoginShortcutPlugin::make()
 
 Good policies include a VPN/private-network check, an application access policy, or an identity-aware proxy assertion. Do not trust `X-Forwarded-For` or similar headers unless Laravel trusted proxies are configured correctly. Exceptions fail closed. A translated warning is displayed whenever an authorized non-local component renders.
 
+## Eligible users and search
+
+The Select is filtered **only** by the active eligibility strategy:
+
+- `allUsers()` — the default — lists every user from the configured model.
+- `usersWithEmails()` and `usersWithEmailDomains()` list only the matching users.
+- `usersUsingQuery()` lists only the users returned by its Eloquent query.
+
+Strategies are mutually exclusive: the last strategy method called replaces the previous one. There is deliberately no ID-list strategy.
+
+```php
+// All users (default)
+LoginShortcutPlugin::make()->enabled(true)->allUsers();
+
+// Exact email addresses
+LoginShortcutPlugin::make()->enabled(true)->usersWithEmails([
+    'admin@example.test',
+    'editor@example.test',
+]);
+
+// Exact email domains; @ is optional
+LoginShortcutPlugin::make()->enabled(true)->usersWithEmailDomains(['local.test']);
+
+// Custom query must return a Builder for the configured user model
+use Illuminate\Database\Eloquent\Builder;
+LoginShortcutPlugin::make()->enabled(true)->usersUsingQuery(
+    fn (Builder $query): Builder => $query->where('is_admin', true),
+);
+```
+
+Domain matching is parameterized and suffix-based (`person@example.test` matches, `person@notexample.test` and `person@example.test.attacker.test` do not). It lowercases both sides; database collation and Unicode case folding may still differ by engine.
+
+> **Important:** `canAccessPanel()` does **not** filter the initially displayed users or search results. Changing a user's `canAccessPanel()` result alone will never add or remove that user from the Select.
+
+The package calls `canAccessPanel()` only after a user has been selected and the **Login as user** button is pressed. If it returns `false`, login is denied; the user may still have appeared in the Select. To restrict what the Select shows in the first place, use an eligibility strategy — with the custom query above, non-admin users are never queried for or shown at all.
+
+The default model is `App\Models\User`, label is `email`, search column is `email`, limit is 20, minimum length is 1, and debounce is 300ms. The model must be an Eloquent model implementing `Authenticatable`; integer, UUID, ULID, and other string auth identifiers are supported.
+
+```php
+use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
+
+LoginShortcutPlugin::make()
+    ->userModel(User::class)
+    ->searchColumns(['email', 'name'])
+    ->searchResultLimit(20)
+    ->minimumSearchLength(1)
+    ->searchDebounce(300)
+    ->userLabelUsing(
+        fn (Authenticatable $user): string => sprintf('%s (%s)', $user->getAttribute('name'), $user->getAttribute('email')),
+    );
+```
+
+Search never runs below the minimum length, escapes SQL wildcard input, limits results with a hard maximum, and returns only identifier and label. At submission, the selected identifier is looked up again through the trusted constrained query.
+
 ## Plugin API reference
 
-All fluent methods return the plugin instance, so they can be chained in a panel provider. The configuration methods below are the supported public API; the other public methods on the class are internal accessors used by the package.
+All fluent methods return the plugin instance, so they can be chained in a panel provider. The configuration methods in the first table are the supported public configuration API; the accessors in the last table exist for Filament and the package's internal services.
 
 | Method | Argument | Default | Purpose |
 | --- | --- | --- | --- |
@@ -89,32 +197,6 @@ All fluent methods return the plugin instance, so they can be chained in a panel
 | `usersUsingQuery(Closure $callback)` | `fn (Builder $query): Builder` for configured model | none | Provides a custom eligible-users query. Replaces another strategy; a wrong builder/model throws `InvalidConfiguration`. |
 | `logIpAddresses(bool $value = true)` | Boolean | config `audit.log_ip_addresses` (`false`) | Includes IPs in audit records. Enable only with suitable retention controls. |
 | `transformIpAddressUsing(Closure $callback)` | `fn (?string $ip): ?string` | none | Transforms an IP before it is included in audit data, e.g. hashes it. |
-
-### Filtering selectable users
-
-The Select is filtered **only** by the active eligibility strategy:
-
-- `allUsers()` — the default — lists every user from the configured model.
-- `usersWithEmails()` and `usersWithEmailDomains()` list only the matching users.
-- `usersUsingQuery()` lists only the users returned by its Eloquent query.
-
-> **Important:** `canAccessPanel()` does **not** filter the initially displayed users or search results. Changing a user's `canAccessPanel()` result alone will never add or remove that user from the Select.
-
-The package calls `canAccessPanel()` only after a user has been selected and the **Login as user** button is pressed. If it returns `false`, login is denied; the user may still have appeared in the Select.
-
-To filter the Select, configure `usersUsingQuery()` in the panel provider. The callback becomes the database query for the initial options and search results. For example, CourtDesk's admin panel permits only users with `is_admin = true`:
-
-```php
-use Illuminate\Database\Eloquent\Builder;
-
-LoginShortcutPlugin::make()
-    ->enabled()
-    ->usersUsingQuery(
-        fn (Builder $query): Builder => $query->where('is_admin', true),
-    );
-```
-
-With this configuration, non-admin users are never queried for or shown in the Select. `canAccessPanel()` remains a separate final authorization check at login.
 
 ### Package configuration reference
 
@@ -158,60 +240,23 @@ These public methods exist for Filament and the package's Livewire/query service
 | `shouldLogIps()` | `bool` | Resolves whether audit entries include IP data. |
 | `ipTransformer()` | `?Closure` | Returns the optional IP-transform callback. |
 
-## Users, filters, and search
-
-The default model is `App\Models\User`, label is `email`, search column is `email`, limit is 20, minimum length is 1, and debounce is 300ms. The model must be an Eloquent model implementing `Authenticatable`; integer, UUID, ULID, and other string auth identifiers are supported.
-
-Strategies are mutually exclusive: the last strategy method called replaces the previous one. There is deliberately no ID-list strategy.
-
-```php
-// All users (default)
-LoginShortcutPlugin::make()->enabled(true)->allUsers();
-
-// Exact email addresses
-LoginShortcutPlugin::make()->enabled(true)->usersWithEmails([
-    'admin@example.test',
-    'editor@example.test',
-]);
-
-// Exact email domains; @ is optional
-LoginShortcutPlugin::make()->enabled(true)->usersWithEmailDomains(['local.test']);
-
-// Custom query must return a Builder for the configured user model
-use Illuminate\Database\Eloquent\Builder;
-LoginShortcutPlugin::make()->enabled(true)->usersUsingQuery(
-    fn (Builder $query): Builder => $query->where('is_admin', true),
-);
-```
-
-Domain matching is parameterized and suffix-based (`person@example.test` matches, `person@notexample.test` and `person@example.test.attacker.test` do not). It lowercases both sides; database collation and Unicode case folding may still differ by engine.
-
-```php
-use App\Models\User;
-use Illuminate\Contracts\Auth\Authenticatable;
-
-LoginShortcutPlugin::make()
-    ->userModel(User::class)
-    ->searchColumns(['email', 'name'])
-    ->searchResultLimit(20)
-    ->minimumSearchLength(1)
-    ->searchDebounce(300)
-    ->userLabelUsing(
-        fn (Authenticatable $user): string => sprintf('%s (%s)', $user->getAttribute('name'), $user->getAttribute('email')),
-    );
-```
-
-Search never runs below the minimum length, escapes SQL wildcard input, limits results with a hard maximum, and returns only identifier and label. At submission, the selected identifier is looked up again through the trusted constrained query.
-
 ## Authentication and auditing
 
 The component refuses authenticated panel guards, uses the current panel's configured guard, and checks `canAccessPanel()` when present after a user is selected. It regenerates the session and redirects only to a same-host intended URL or the panel URL. It has separate per-panel/session/IP rate limits for search and login. It does not replace an existing session or act as impersonation.
 
-Events are `AutoLoginSucceeded`, `AutoLoginDenied`, and `AutoLoginFailed`. They contain identifiers (not email/name), panel, environment, timestamp, and a stable reason code where relevant. IP addresses are absent by default:
+Three audit events are dispatched through Laravel's `event()` dispatcher and can be consumed with standard listeners:
+
+| Event (namespace `OutatimeIo\FilamentLoginShortcut\Events`) | Public properties |
+| --- | --- |
+| `AutoLoginSucceeded` | `userModel`, `identifier`, `panelId`, `environment`, `occurredAt`, `ipAddress` |
+| `AutoLoginDenied` | `reason`, `panelId`, `environment`, `occurredAt`, `ipAddress` |
+| `AutoLoginFailed` | `reason`, `panelId`, `environment`, `occurredAt`, `ipAddress` |
+
+Properties contain identifiers (not emails or names), panel ID, environment, an immutable timestamp, and a stable reason code where relevant (`rate_limited`, `already_authenticated`, `invalid_selection`, `panel_access_denied`, …). `ipAddress` is `null` unless explicitly enabled; when enabled, transform it before it is stored, e.g. hash it:
 
 ```php
 LoginShortcutPlugin::make()
-    ->logIpAddresses(false)
+    ->logIpAddresses()
     ->transformIpAddressUsing(fn (?string $ip): ?string => $ip ? hash('sha256', $ip) : null);
 ```
 
@@ -221,12 +266,18 @@ Set `audit.log_channel` in package configuration for optional concise log record
 
 You remain responsible for lawful purpose, access controls, log security, retention, deletion, incident review, and any IP-address processing. This package follows data minimization but does not itself make an application GDPR compliant.
 
-## Testing, contributing, and releases
+## Testing
 
-Run `composer validate`, `composer format`, `composer analyse`, and `composer test`. The GitHub workflow covers Filament 4 and 5; it excludes Filament 3. See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), [CHANGELOG.md](CHANGELOG.md), and [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
+Run `composer validate`, `composer format`, `composer analyse`, and `composer test`. The GitHub workflow covers representative PHP, Laravel, and Filament combinations from the compatibility table above.
 
-Before publication, configure the final GitHub/Packagist metadata and security contact.
+## Contributing and security
+
+Bug reports and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Please report suspected vulnerabilities privately as described in [SECURITY.md](SECURITY.md).
+
+## Changelog
+
+Notable changes are documented in the [changelog](CHANGELOG.md).
 
 ## License
 
-MIT. See [LICENSE.md](LICENSE.md).
+Released under the [MIT license](LICENSE.md).
