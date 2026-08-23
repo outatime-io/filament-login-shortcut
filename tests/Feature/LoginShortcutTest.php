@@ -54,6 +54,12 @@ function rateLimitKey(string $operation): string
     return 'filament-login-shortcut:'.$operation.':admin:'.hash('sha256', session()->getId().'|'.request()->ip());
 }
 
+it('renders the non-local warning text in the callout', function (): void {
+    loginShortcutComponent()
+        ->assertSee('Warning: Passwordless login shortcut is enabled for: testing.')
+        ->assertSee('style="display: grid; gap: 1rem;"', escape: false);
+});
+
 it('searches eligible users case-insensitively, respects the result limit, and records the search attempt', function (): void {
     $alice = User::query()->create(['email' => 'alice@example.test']);
     User::query()->create(['email' => 'albert@example.test']);

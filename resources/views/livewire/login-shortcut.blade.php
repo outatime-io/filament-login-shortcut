@@ -5,13 +5,14 @@
                 {{ __('filament-login-shortcut::messages.heading') }}
             </x-slot>
 
-            @if ($nonLocal)
-                <x-filament::callout color="warning">
-                    {{ __('filament-login-shortcut::messages.warning', ['environments' => $environments]) }}
-                </x-filament::callout>
-            @endif
-
             <div style="display: grid; gap: 1rem;">
+                @if ($nonLocal)
+                    <x-filament::callout
+                        color="warning"
+                        :description="__('filament-login-shortcut::messages.warning', ['environments' => $environments])"
+                    />
+                @endif
+
                 {{ $this->form }}
 
                 <x-filament::button type="button" wire:click="login" wire:loading.attr="disabled" :disabled="blank($data['selectedIdentifier'] ?? null)" style="width: 100%;">
