@@ -13,9 +13,8 @@ A secure login shortcut selector for Filament panels.
 [![License](https://img.shields.io/packagist/l/outatime-io/filament-login-shortcut.svg)](LICENSE.md)
 [![Tests](https://github.com/outatime-io/filament-login-shortcut/actions/workflows/tests.yml/badge.svg)](https://github.com/outatime-io/filament-login-shortcut/actions/workflows/tests.yml)
 
-> **Security warning:** This package provides a passwordless sign-in shortcut. Enabling it outside a local environment can grant access to privileged user accounts. Non-local use requires an application-defined authorization callback and appropriate network and organizational controls.
-
-Production use should generally remain disabled, even though deliberate production activation is technically possible.
+> [!WARNING]
+> This package provides passwordless sign-in as any eligible user account. Enabling it outside a local environment can grant access to privileged accounts. Non-local use requires an application-defined authorization callback plus appropriate network and organizational controls. Production use should generally remain disabled, even though deliberate production activation is technically possible.
 
 Filament Login Shortcut is a plugin for [Filament](https://filamentphp.com) panels that adds a passwordless sign-in shortcut to the panel login screen: an authorized visitor picks an eligible user account from a searchable select and signs in as that user without entering a password. It removes the friction of repeatedly typing credentials while developing or testing an application.
 
