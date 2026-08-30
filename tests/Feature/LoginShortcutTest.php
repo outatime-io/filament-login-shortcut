@@ -93,7 +93,10 @@ it('rate limits user searches and audits the denial', function (): void {
     config()->set('filament-login-shortcut.rate_limits.searches_per_minute', 1);
     RateLimiter::hit(rateLimitKey('searches_per_minute'), 60);
 
-    expect(fn (): array => searchResults(loginShortcutComponent(), 'alice'))->toThrow(ValidationException::class);
+    $component = loginShortcutComponent();
+
+    expect(searchResults($component, 'alice'))->toBe([])
+        ->and($component->instance()->searchError)->toMatch('/^Too many attempts\. Try again in \d+ seconds\.$/');
 
     Event::assertDispatched(AutoLoginDenied::class, fn (AutoLoginDenied $event): bool => $event->reason === Reason::RATE_LIMITED && $event->panelId === 'admin');
 });
@@ -145,13 +148,35 @@ it('rate limits login attempts and audits the denial', function (): void {
     config()->set('filament-login-shortcut.rate_limits.logins_per_minute', 1);
     RateLimiter::hit(rateLimitKey('logins_per_minute'), 60);
 
-    loginShortcutComponent()
+    $component = loginShortcutComponent()
         ->set('data.selectedIdentifier', '1')
         ->call('login')
         ->assertHasErrors(['selectedIdentifier']);
 
-    expect(auth()->check())->toBeFalse();
+    expect($component->errors()->first('selectedIdentifier'))->toMatch('/^Too many attempts\. Try again in \d+ seconds\.$/')
+        ->and(auth()->check())->toBeFalse();
     Event::assertDispatched(AutoLoginDenied::class, fn (AutoLoginDenied $event): bool => $event->reason === Reason::RATE_LIMITED && $event->panelId === 'admin');
+});
+
+it('pluralizes the rate-limit retry message based on the remaining seconds', function (): void {
+    expect(trans_choice('filament-login-shortcut::messages.rate_limited', 1))->toBe('Too many attempts. Try again in 1 second.')
+        ->and(trans_choice('filament-login-shortcut::messages.rate_limited', 45))->toBe('Too many attempts. Try again in 45 seconds.');
+});
+
+it('keeps the generic unavailable message for non-rate-limit denials', function (): void {
+    Event::fake([AutoLoginDenied::class]);
+
+    $component = loginShortcutComponent()->instance();
+    $deny = new ReflectionMethod($component, 'deny');
+
+    try {
+        $deny->invoke($component, Reason::AUTHENTICATED);
+        $this->fail('Expected the denial to throw a validation exception.');
+    } catch (ValidationException $exception) {
+        expect($exception->validator->errors()->first('selectedIdentifier'))->toBe(__('filament-login-shortcut::messages.unavailable'));
+    }
+
+    Event::assertDispatched(AutoLoginDenied::class, fn (AutoLoginDenied $event): bool => $event->reason === Reason::AUTHENTICATED && $event->panelId === 'admin');
 });
 
 it('serves the shortcut only to allow-listed client IPs when no authorization callback is set', function (): void {
