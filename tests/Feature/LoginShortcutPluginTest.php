@@ -58,3 +58,11 @@ it('resolves closure-based IP allow-lists and fails closed when resolution error
         ->and(LoginShortcutPlugin::make()->allowedIps(fn (): array => ['not-an-ip'])->ipAllowlist())->toBe([])
         ->and(LoginShortcutPlugin::make()->allowedIps(fn (): string => '10.0.0.5')->ipAllowlist())->toBe([]);
 });
+
+it('uses a MariaDB-safe backslash escape literal for user searches', function (): void {
+    $query = app(\OutatimeIo\FilamentLoginShortcut\Query\EligibleUsers::class)
+        ->matching(LoginShortcutPlugin::make()->searchColumns(['email']), 'user')
+        ->toRawSql();
+
+    expect($query)->toContain('ESCAPE CHAR(92)');
+});
