@@ -35,6 +35,8 @@ final class LoginShortcut extends Component implements HasForms
     /** @var array{selectedIdentifier?: string|null} */
     public array $data = [];
 
+    public ?string $searchError = null;
+
     public function mount(string $panelId): void
     {
         $this->panelId = $panelId;
@@ -145,12 +147,23 @@ final class LoginShortcut extends Component implements HasForms
     /** @return array<string, string> */
     private function searchUsers(string $search): array
     {
+        $this->searchError = null;
+
         if (! $this->guardAvailable()) {
             return [];
         }
 
         $plugin = $this->plugin();
-        if (mb_strlen(trim($search)) < $plugin->minimumLength() || ! $this->attempt('searches_per_minute', Reason::RATE_LIMITED)) {
+        if (mb_strlen(trim($search)) < $plugin->minimumLength()) {
+            return [];
+        }
+
+        try {
+            $this->attempt('searches_per_minute', Reason::RATE_LIMITED);
+        } catch (ValidationException $exception) {
+            $this->searchError = $exception->validator->errors()->first('selectedIdentifier');
+            $this->dispatch('filament-login-shortcut-rate-limited', message: $this->searchError);
+
             return [];
         }
 
@@ -192,22 +205,33 @@ final class LoginShortcut extends Component implements HasForms
 
     private function attempt(string $limit, string $reason): bool
     {
-        if (! RateLimiter::tooManyAttempts($this->key($limit), (int) config('filament-login-shortcut.rate_limits.'.$limit, 10))) {
+        $key = $this->key($limit);
+
+        if (! RateLimiter::tooManyAttempts($key, (int) config('filament-login-shortcut.rate_limits.'.$limit, 10))) {
             return true;
-        } $this->deny($reason);
+        } $this->deny($reason, RateLimiter::availableIn($key));
 
         return false;
     }
 
     private function key(string $operation): string
     {
-        return 'filament-login-shortcut:'.$operation.':'.$this->panelId.':'.hash('sha256', (string) request()->session()->getId().'|'.(string) request()->ip());
+        $identity = $operation === 'logins_per_minute'
+            ? (string) request()->ip()
+            : (string) request()->session()->getId().'|'.(string) request()->ip();
+
+        return 'filament-login-shortcut:'.$operation.':'.$this->panelId.':'.hash('sha256', $identity);
     }
 
-    private function deny(string $reason): null
+    private function deny(string $reason, ?int $retryAfter = null): null
     {
         app(Audit::class)->dispatch(new AutoLoginDenied($reason, $this->panelId, (string) app()->environment(), new \DateTimeImmutable, app(Audit::class)->ip($this->plugin(), request())), $this->plugin());
-        throw ValidationException::withMessages(['selectedIdentifier' => __('filament-login-shortcut::messages.unavailable')]);
+
+        $message = $reason === Reason::RATE_LIMITED && $retryAfter !== null
+            ? trans_choice('filament-login-shortcut::messages.rate_limited', $retryAfter)
+            : __('filament-login-shortcut::messages.unavailable');
+
+        throw ValidationException::withMessages(['selectedIdentifier' => $message]);
     }
 
     private function fail(string $reason): null

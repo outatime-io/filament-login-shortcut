@@ -9,5 +9,6 @@ return [
     'loading' => 'Searching users…',
     'warning' => 'Warning: Passwordless login shortcut is enabled for: :environments.',
     'unavailable' => 'Login shortcut is not available.',
+    'rate_limited' => '{0,1}Too many attempts. Try again in :count second.|[2,*]Too many attempts. Try again in :count seconds.',
     'login_failed' => 'The selected user cannot be logged in.',
 ];

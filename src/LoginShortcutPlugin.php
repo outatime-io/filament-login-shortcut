@@ -13,6 +13,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use OutatimeIo\FilamentLoginShortcut\Exceptions\InvalidConfiguration;
+use OutatimeIo\FilamentLoginShortcut\Support\IpAddress;
 
 final class LoginShortcutPlugin implements Plugin
 {
@@ -20,6 +21,9 @@ final class LoginShortcutPlugin implements Plugin
 
     /** @var list<string>|null */
     private ?array $environments = null;
+
+    /** @var list<string>|Closure(): list<string>|null */
+    private array|Closure|null $ips = null;
 
     private ?string $model = null;
 
@@ -76,6 +80,14 @@ final class LoginShortcutPlugin implements Plugin
     public function allowedEnvironments(array $environments): self
     {
         $this->environments = $this->normalize($environments);
+
+        return $this;
+    }
+
+    /** @param list<string>|Closure(): list<string> $ips */
+    public function allowedIps(array|Closure $ips): self
+    {
+        $this->ips = $ips instanceof Closure ? $ips : $this->validateIps($ips);
 
         return $this;
     }
@@ -246,6 +258,29 @@ final class LoginShortcutPlugin implements Plugin
         return $this->authorize;
     }
 
+    /** @return list<string>|null */
+    public function ipAllowlist(): ?array
+    {
+        if ($this->ips === null) {
+            return null;
+        }
+
+        if ($this->ips instanceof Closure) {
+            try {
+                /** @var list<string> $resolved */
+                $resolved = app()->call($this->ips);
+
+                return $this->validateIps($resolved);
+            } catch (\Throwable $e) {
+                report($e);
+
+                return [];
+            }
+        }
+
+        return $this->ips;
+    }
+
     public function query(): ?Closure
     {
         return $this->query;
@@ -305,6 +340,27 @@ final class LoginShortcutPlugin implements Plugin
         }
 
         return $columns;
+    }
+
+    /**
+     * @param  list<mixed>  $values
+     * @return list<string>
+     */
+    private function validateIps(array $values): array
+    {
+        $addresses = [];
+
+        foreach ($values as $value) {
+            $canonical = IpAddress::canonical($value);
+
+            if ($canonical === null) {
+                throw new InvalidConfiguration('Allowed IP addresses must be non-empty, valid IP addresses.');
+            }
+
+            $addresses[] = $canonical;
+        }
+
+        return array_values(array_unique($addresses));
     }
 
     private function hookView(Panel $panel): View
