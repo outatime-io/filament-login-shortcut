@@ -6,6 +6,7 @@ use Illuminate\Contracts\Debug\ExceptionHandler;
 use Mockery;
 use OutatimeIo\FilamentLoginShortcut\Exceptions\InvalidConfiguration;
 use OutatimeIo\FilamentLoginShortcut\LoginShortcutPlugin;
+use OutatimeIo\FilamentLoginShortcut\Query\EligibleUsers;
 
 it('requires panel-provider enablement and does not read availability configuration', function (): void {
     config()->set('filament-login-shortcut.enabled', true);
@@ -60,7 +61,7 @@ it('resolves closure-based IP allow-lists and fails closed when resolution error
 });
 
 it('uses a MariaDB-safe backslash escape literal for user searches', function (): void {
-    $query = app(\OutatimeIo\FilamentLoginShortcut\Query\EligibleUsers::class)
+    $query = app(EligibleUsers::class)
         ->matching(LoginShortcutPlugin::make()->searchColumns(['email']), 'user')
         ->toRawSql();
 
