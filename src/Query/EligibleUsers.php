@@ -31,7 +31,7 @@ final class EligibleUsers
             $email = $grammar->wrap('email');
             $query->where(function (Builder $query) use ($email, $plugin): void {
                 foreach ($plugin->domains() as $domain) {
-                    $query->orWhereRaw("LOWER({$email}) LIKE ? ESCAPE '\\'", ['%@'.$this->escapeLike($domain)]);
+                    $query->orWhereRaw("LOWER({$email}) LIKE ? ESCAPE CHAR(92)", ['%@'.$this->escapeLike($domain)]);
                 }
             });
         }
@@ -47,7 +47,7 @@ final class EligibleUsers
 
         return $query->where(function (Builder $query) use ($plugin, $term): void {
             foreach ($plugin->columns() as $column) {
-                $query->orWhereRaw('LOWER('.$query->getQuery()->getGrammar()->wrap($column).") LIKE ? ESCAPE '\\'", ['%'.$term.'%']);
+                $query->orWhereRaw('LOWER('.$query->getQuery()->getGrammar()->wrap($column).') LIKE ? ESCAPE CHAR(92)', ['%'.$term.'%']);
             }
         });
     }

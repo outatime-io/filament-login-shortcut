@@ -4,6 +4,7 @@ All notable changes will be documented in this file. This project follows Semant
 
 ## v1.1.0
 
+- Added an informative rate-limit denial message that reports the remaining wait in seconds through a new pluralization-aware `rate_limited` translation key; other denials keep the generic unavailable message and audit events with reason codes are unchanged (#8).
 - Added `allowedIps()` for a built-in, exact-match client IP allow-list that satisfies the mandatory non-local authorization on its own and composes with `authorizeUsing()` under AND semantics (#12). Entries are canonicalized so equivalent IPv6 spellings match; closure resolution errors are reported and fail closed.
 
 ## v1.0.1
