@@ -51,7 +51,11 @@ function searchResults(Testable $component, string $search): array
 
 function rateLimitKey(string $operation): string
 {
-    return 'filament-login-shortcut:'.$operation.':admin:'.hash('sha256', session()->getId().'|'.request()->ip());
+    $identity = $operation === 'logins_per_minute'
+        ? (string) request()->ip()
+        : session()->getId().'|'.request()->ip();
+
+    return 'filament-login-shortcut:'.$operation.':admin:'.hash('sha256', $identity);
 }
 
 it('renders the non-local warning text in the callout', function (): void {
@@ -156,6 +160,25 @@ it('rate limits login attempts and audits the denial', function (): void {
     expect($component->errors()->first('selectedIdentifier'))->toMatch('/^Too many attempts\. Try again in \d+ seconds\.$/')
         ->and(auth()->check())->toBeFalse();
     Event::assertDispatched(AutoLoginDenied::class, fn (AutoLoginDenied $event): bool => $event->reason === Reason::RATE_LIMITED && $event->panelId === 'admin');
+});
+
+it('keeps the login limit after the session is invalidated', function (): void {
+    $user = User::query()->create(['email' => 'alice@example.test']);
+    config()->set('filament-login-shortcut.rate_limits.logins_per_minute', 1);
+
+    loginShortcutComponent()
+        ->set('data.selectedIdentifier', (string) $user->getAuthIdentifier())
+        ->call('login')
+        ->assertRedirect();
+
+    auth()->logout();
+    session()->invalidate();
+    session()->regenerateToken();
+
+    loginShortcutComponent()
+        ->set('data.selectedIdentifier', (string) $user->getAuthIdentifier())
+        ->call('login')
+        ->assertHasErrors(['selectedIdentifier']);
 });
 
 it('pluralizes the rate-limit retry message based on the remaining seconds', function (): void {

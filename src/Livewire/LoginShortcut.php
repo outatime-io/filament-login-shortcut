@@ -216,7 +216,11 @@ final class LoginShortcut extends Component implements HasForms
 
     private function key(string $operation): string
     {
-        return 'filament-login-shortcut:'.$operation.':'.$this->panelId.':'.hash('sha256', (string) request()->session()->getId().'|'.(string) request()->ip());
+        $identity = $operation === 'logins_per_minute'
+            ? (string) request()->ip()
+            : (string) request()->session()->getId().'|'.(string) request()->ip();
+
+        return 'filament-login-shortcut:'.$operation.':'.$this->panelId.':'.hash('sha256', $identity);
     }
 
     private function deny(string $reason, ?int $retryAfter = null): null
