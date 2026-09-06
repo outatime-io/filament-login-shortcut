@@ -42,7 +42,7 @@ The shortcut ships disabled, must be enabled explicitly per panel, refuses to re
 - **Rate limiting** per panel, session, and IP for searches and logins
 - **Minimal audit data**: events carry identifiers, never emails or names; no IP addresses logged by default
 - **Hardened sessions**: regeneration on login and same-host redirect protection
-- **Broad compatibility**: Filament v4 and v5 on PHP 8.2–8.5
+- **Broad compatibility**: Filament 4.7+ and 5.2+ on PHP 8.2–8.5
 
 ## Compatibility
 
@@ -51,9 +51,9 @@ The shortcut ships disabled, must be enabled explicitly per panel, refuses to re
 | PHP | 8.2–8.5 |
 | Laravel | 12–13 (as resolved by Filament) |
 | Livewire | 3.x with Filament 4; 4.x with Filament 5 |
-| Filament | 4.x and 5.x |
+| Filament | 4.7+ and 5.2+ |
 
-Filament v3 is intentionally unsupported. CI tests representative combinations of the lowest and current supported Laravel and PHP versions for both Filament majors.
+Filament v3 is intentionally unsupported. CI tests representative combinations of the lowest and current supported Laravel and PHP versions for both supported Filament release series, starting from the minimum versions listed above.
 
 ## Installation
 
