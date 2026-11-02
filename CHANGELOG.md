@@ -2,9 +2,10 @@
 
 All notable changes will be documented in this file. This project follows Semantic Versioning.
 
-## Unreleased
+## v1.1.2
 
-- Preserve the model configured by `userModel()` in custom query callbacks, so Larastan recognizes model scopes through fluent chains and separate configuration calls without application-specific stubs.
+- Preserved the model configured by `userModel()` in custom query callbacks, so Larastan recognizes model scopes through
+  fluent chains and separate configuration calls without application-specific stubs.
 
 ## v1.1.1
 
