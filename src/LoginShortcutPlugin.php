@@ -15,6 +15,9 @@ use Illuminate\Database\Eloquent\Model;
 use OutatimeIo\FilamentLoginShortcut\Exceptions\InvalidConfiguration;
 use OutatimeIo\FilamentLoginShortcut\Support\IpAddress;
 
+/**
+ * @template TModel of Model = Model
+ */
 final class LoginShortcutPlugin implements Plugin
 {
     private bool|Closure|null $enabled = null;
@@ -40,6 +43,7 @@ final class LoginShortcutPlugin implements Plugin
 
     private ?Closure $authorize = null;
 
+    /** @var Closure(Builder<TModel>): Builder<TModel>|null */
     private ?Closure $query = null;
 
     /** @var list<string>|null */
@@ -52,6 +56,7 @@ final class LoginShortcutPlugin implements Plugin
 
     private ?Closure $transformIp = null;
 
+    /** @return self<Model> */
     public static function make(): self
     {
         return new self;
@@ -69,6 +74,7 @@ final class LoginShortcutPlugin implements Plugin
 
     public function boot(Panel $panel): void {}
 
+    /** @return $this */
     public function enabled(bool|Closure $enabled = true): self
     {
         $this->enabled = $enabled;
@@ -76,7 +82,10 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
-    /** @param list<string> $environments */
+    /**
+     * @param  list<string>  $environments
+     * @return $this
+     */
     public function allowedEnvironments(array $environments): self
     {
         $this->environments = $this->normalize($environments);
@@ -84,7 +93,10 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
-    /** @param list<string>|Closure(): list<string> $ips */
+    /**
+     * @param  list<string>|Closure(): list<string>  $ips
+     * @return $this
+     */
     public function allowedIps(array|Closure $ips): self
     {
         $this->ips = $ips instanceof Closure ? $ips : $this->validateIps($ips);
@@ -92,7 +104,15 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
-    /** @param class-string<Model&Authenticatable> $model */
+    /**
+     * @template TUser of Model&Authenticatable
+     *
+     * @param  class-string<TUser>  $model
+     *
+     * @phpstan-self-out self<TUser>
+     *
+     * @return $this
+     */
     public function userModel(string $model): self
     {
         $this->assertModel($model);
@@ -101,7 +121,10 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
-    /** @param list<string> $columns */
+    /**
+     * @param  list<string>  $columns
+     * @return $this
+     */
     public function searchColumns(array $columns): self
     {
         $this->columns = $this->validateColumns($columns);
@@ -109,6 +132,7 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
+    /** @return $this */
     public function searchResultLimit(int $limit): self
     {
         if ($limit < 1) {
@@ -118,6 +142,7 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
+    /** @return $this */
     public function minimumSearchLength(int $length): self
     {
         if ($length < 1) {
@@ -127,6 +152,7 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
+    /** @return $this */
     public function searchDebounce(int $milliseconds): self
     {
         if ($milliseconds < 0) {
@@ -136,6 +162,7 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
+    /** @return $this */
     public function userLabelUsing(Closure $callback): self
     {
         $this->label = $callback;
@@ -143,6 +170,7 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
+    /** @return $this */
     public function authorizeUsing(Closure $callback): self
     {
         $this->authorize = $callback;
@@ -151,7 +179,8 @@ final class LoginShortcutPlugin implements Plugin
     }
 
     /**
-     * @param  Closure(Builder<Model>): Builder<Model>  $callback
+     * @param  Closure(Builder<TModel>): Builder<TModel>  $callback
+     * @return $this
      */
     public function usersUsingQuery(Closure $callback): self
     {
@@ -161,6 +190,7 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
+    /** @return $this */
     public function allUsers(): self
     {
         $this->strategy();
@@ -168,7 +198,10 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
-    /** @param list<string> $emails */
+    /**
+     * @param  list<string>  $emails
+     * @return $this
+     */
     public function usersWithEmails(array $emails): self
     {
         $this->strategy();
@@ -177,7 +210,10 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
-    /** @param list<string> $domains */
+    /**
+     * @param  list<string>  $domains
+     * @return $this
+     */
     public function usersWithEmailDomains(array $domains): self
     {
         $this->strategy();
@@ -193,6 +229,7 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
+    /** @return $this */
     public function logIpAddresses(bool $value = true): self
     {
         $this->logIps = $value;
@@ -200,6 +237,7 @@ final class LoginShortcutPlugin implements Plugin
         return $this;
     }
 
+    /** @return $this */
     public function transformIpAddressUsing(Closure $callback): self
     {
         $this->transformIp = $callback;
@@ -281,6 +319,7 @@ final class LoginShortcutPlugin implements Plugin
         return $this->ips;
     }
 
+    /** @return (Closure(Builder<TModel>): Builder<TModel>)|null */
     public function query(): ?Closure
     {
         return $this->query;
